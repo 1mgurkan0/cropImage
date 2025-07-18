@@ -1,0 +1,32 @@
+services:
+    ###> doctrine/doctrine-bundle ###
+    database:
+        image: mariadb:10.8.3
+        container_name: image-editor-mysql
+        command: --default-authentication-plugin=mysql_native_password
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - 3306:3306  # dışarıya açılan port
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: image-editor-phpmyadmin
+        depends_on:
+            - database
+        environment:
+            PMA_HOST: database  # service name ile bağlantı
+            PMA_PORT: 3306
+            PMA_ARBITRARY: 1
+            MYSQL_ROOT_PASSWORD: root
+        restart: always
+        ports:
+            - 8040:80  # dışarıya açılan port
+
+    adminer:
+        image: adminer
+        container_name: image-editor-adminer
+        restart: always
+        ports:
+            - 8050:8080  # dışarıya açılan port
