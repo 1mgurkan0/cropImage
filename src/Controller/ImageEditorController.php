@@ -36,29 +36,47 @@ final class ImageEditorController extends AbstractController
             return new Response('En fazla 10 görsel yükleyebilirsiniz!', 400);
         }
 
-        $targetKb = (int) $request->request->get('target_kb', 100);
+        $compressionRatio = (int) $request->request->get('compression_ratio', 0);
+        $baseTargetKb = (int) $request->request->get('target_kb', 100);
 
-        if (!$files || !is_array($files) || $targetKb <= 0) {
-            return new Response('Geçersiz dosyalar veya hedef boyut!', 400);
+        if ($baseTargetKb <= 0 && ($compressionRatio <= 0 || $compressionRatio > 100)) {
+            return new Response('Geçersiz hedef boyut veya sıkıştırma oranı!', 400);
         }
 
         $zip = new \ZipArchive();
-        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_compressed' . uniqid() . '.zip';
+        $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
 
         if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
             return new Response('Zip dosyası oluşturulamadı!', 500);
         }
 
-        foreach ($files as $index => $file) {
+        foreach ($files as $file) {
             if (!$file->isValid()) continue;
 
+            $mimeType = $file->getMimeType();
             $imageData = file_get_contents($file->getPathname());
-            $image = @imagecreatefromstring($imageData);
+
+            switch ($mimeType) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($file->getPathname());
+                    $ext = 'jpg';
+                    break;
+                case 'image/png':
+                    $image = imagecreatefrompng($file->getPathname());
+                    $ext = 'png';
+                    break;
+                case 'image/webp':
+                    $image = imagecreatefromwebp($file->getPathname());
+                    $ext = 'webp';
+                    break;
+                default:
+                    continue 2;
+            }
+
             if (!$image) continue;
 
             $maxWidth = 1024;
             $maxHeight = 1024;
-
             $width = imagesx($image);
             $height = imagesy($image);
 
@@ -67,18 +85,29 @@ final class ImageEditorController extends AbstractController
                 $newWidth = (int)($width * $ratio);
                 $newHeight = (int)($height * $ratio);
 
-                $newImage = imagecreatetruecolor($newWidth, $newHeight);
-                imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                $resized = imagecreatetruecolor($newWidth, $newHeight);
+                imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
                 imagedestroy($image);
-                $image = $newImage;
+                $image = $resized;
             }
+
+            $originalSizeKb = filesize($file->getPathname()) / 1024;
+            $targetKb = $compressionRatio > 0 ? $originalSizeKb * ($compressionRatio / 100) : $baseTargetKb;
 
             $quality = 95;
             $minQuality = 10;
-            $step = 1;
+            $step = 3;
+
             do {
                 ob_start();
-                imagejpeg($image, null, $quality);
+                if ($ext === 'jpg') {
+                    imagejpeg($image, null, $quality);
+                } elseif ($ext === 'png') {
+                    $pngCompression = 9 - floor(($quality / 100) * 9);
+                    imagepng($image, null, $pngCompression);
+                } elseif ($ext === 'webp') {
+                    imagewebp($image, null, $quality);
+                }
                 $compressedData = ob_get_clean();
 
                 $sizeKb = strlen($compressedData) / 1024;
@@ -93,26 +122,17 @@ final class ImageEditorController extends AbstractController
             imagedestroy($image);
 
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $zip->addFromString($filename . '.jpg', $compressedData);
+            $zip->addFromString($filename . '.' . $ext, $compressedData);
         }
 
         $zip->close();
 
-        $zipContents = file_get_contents($zipPath);
-        unlink($zipPath);
+        return new Response(file_get_contents($zipPath), 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
+                '; filename="converted_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
 
-        $response = new Response($zipContents);
-        $response->headers->set('Content-Type', 'application/zip');
-        $response->headers->set(
-            'Content-Disposition',
-            $response->headers->makeDisposition(
-                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-                'crop-kalitehost_compressed'. (new \DateTime())->format('Y-m-d_H.i.s') .'.zip'
-            )
-        );
-        $response->headers->set('Content-Length', strlen($zipContents));
-
-        return $response;
+        ]);
     }
 
 

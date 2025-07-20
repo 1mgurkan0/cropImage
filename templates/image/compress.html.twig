@@ -118,12 +118,77 @@
         .remove-btn:hover {
             transform: scale(1.1);
         }
+        .resize-modal {
+            background-color: #343a40;
+            border-radius: 8px;
+            padding: 30px;
+            width: 450px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+            border-bottom: 1px solid #495057;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-header h4 {
+            font-weight: bold;
+            color: #fff;
+        }
+        .form-label {
+            color: #adb5bd;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .form-control, .form-select {
+            background-color: #495057;
+            color: #fff;
+            border: 1px solid #6c757d;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #495057;
+            color: #fff;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .form-check-input {
+            background-color: #495057;
+            border-color: #fff;
+        }
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .form-check-label {
+            color:#495057;
+        }
+        .input-group-text {
+            background-color: #495057;
+            color: #fff;
+            border: 1px solid #6c757d;
+        }
+        .info-box {
+            background-color: #495057;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .info-box span {
+            font-weight: bold;
+            color: #fff;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
 <div class="container my-5">
     <div class="card p-4 shadow-lg converter-card">
-        <form action="{{ path('app_image_compress') }}" method="POST" enctype="multipart/form-data">
+        <form method="POST" action="{{ path('app_image_compress') }}" enctype="multipart/form-data">
             <h1 class="card-title text-center mb-4">Görsel Sıkıştırıcı</h1>
 
             <ul class="intro-text lead mb-5 text-start">
@@ -139,13 +204,35 @@
                     <input type="file" id="image-upload" name="image[]" class="d-none" multiple required>
                 </div>
             </div>
-
             <div id="preview-container" class="preview-container"></div>
 
-            <div class="mb-3">
-                <label for="target_kb" class="form-label fw-bold text-muted">Hedef Boyut (KB)</label>
-                <input type="number" id="target_kb" name="target_kb" class="form-control" value="100" min="10" max="1000" required>
+            <div class="d-flex justify-content-around mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="resize_type" id="resize_pixels" value="pixels" checked>
+                    <label class="form-check-label" for="resize_pixels">
+                        Hedef Boyut (KB)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="resize_type" id="resize_percentage" value="percentage">
+                    <label class="form-check-label" for="resize_percentage">
+                        Hedef Boyut (%)
+                    </label>
+                </div>
             </div>
+
+            <div id="pixels_kb_container" class="mb-3">
+                <label for="target_kb" class="form-label">Hedef Dosya Boyutu (KB)</label>
+                <input type="number" class="form-control" id="target_kb" name="target_kb" value="100" min="10" max="1000">
+            </div>
+
+            <div id="percentage_range_container" class="mb-3" style="display:none;">
+                <label for="compression_ratio" class="form-label ">
+                    Hedef Dosya Boyutu <span id="quality_value">90%</span>
+                </label>
+                <input type="range" class="form-range" id="compression_ratio" name="compression_ratio" min="1" max="100" value="90">
+            </div>
+
             <button type="submit" class="btn btn-primary w-100 mt-3 submit-btn">Sıkıştır ve İndir</button>
         </form>
     </div>
@@ -202,15 +289,29 @@
         }
 
         function handleDrop(e) {
-            const dt = new DataTransfer();
+            e.preventDefault();
+            e.stopPropagation();
+
             const droppedFiles = Array.from(e.dataTransfer.files);
 
-            droppedFiles.forEach(file => {
-                dt.items.add(file);
+            const totalFiles = fileList.length + droppedFiles.length;
+            if (totalFiles > 10) {
+                alert('En fazla 10 dosya yükleyebilirsiniz!');
+                return;
+            }
+
+            fileList = [...fileList, ...droppedFiles];
+
+            const uniqueNames = new Set();
+            fileList = fileList.filter(file => {
+                if (uniqueNames.has(file.name)) {
+                    return false;
+                }
+                uniqueNames.add(file.name);
+                return true;
             });
 
-            fileInput.files = dt.files;
-            handleFiles();
+            updateFileListAndPreviews();
         }
 
         function handleFiles() {
@@ -277,5 +378,42 @@
         }
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const pixelsRadio = document.getElementById('resize_pixels');
+        const percentageRadio = document.getElementById('resize_percentage');
+
+        const pixelsKbContainer = document.getElementById('pixels_kb_container');
+        const percentageRangeContainer = document.getElementById('percentage_range_container');
+
+        function toggleInputs() {
+            if (pixelsRadio.checked) {
+                pixelsKbContainer.style.display = 'block';
+                percentageRangeContainer.style.display = 'none';
+            } else if (percentageRadio.checked) {
+                pixelsKbContainer.style.display = 'none';
+                percentageRangeContainer.style.display = 'block';
+            }
+        }
+
+        pixelsRadio.addEventListener('change', toggleInputs);
+        percentageRadio.addEventListener('change', toggleInputs);
+
+        toggleInputs();
+
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const compression_ratio = document.getElementById('compression_ratio');
+        const qualityValue = document.getElementById('quality_value');
+
+        qualityValue.textContent = compression_ratio.value + '%';
+
+        compression_ratio.addEventListener('input', () => {
+            qualityValue.textContent = compression_ratio.value + '%';
+        });
+    });
+</script>
+
+
 </body>
 </html>
