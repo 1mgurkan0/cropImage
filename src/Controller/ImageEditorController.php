@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -13,7 +14,12 @@ use ZipArchive;
 
 final class ImageEditorController extends AbstractController
 {
-    #[Route('/compress', name: 'app_image_compress', methods: ['POST'])]
+    #[Route('/' , name: 'app_home')]
+    public function index(): Response{
+        return $this->render('base.html.twig');
+    }
+
+    #[Route('/goruntu-sikistirma', name: 'app_image_compress', methods: [ 'POST'])]
     public function compressDownload(Request $request): Response
     {
         $files = $request->files->get('image');
@@ -37,7 +43,7 @@ final class ImageEditorController extends AbstractController
         }
 
         $zip = new \ZipArchive();
-        $zipPath = sys_get_temp_dir() . '/compressed_images_' . uniqid() . '.zip';
+        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_compressed' . uniqid() . '.zip';
 
         if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
             return new Response('Zip dosyası oluşturulamadı!', 500);
@@ -93,7 +99,7 @@ final class ImageEditorController extends AbstractController
         $zip->close();
 
         $zipContents = file_get_contents($zipPath);
-        unlink($zipPath); // geçici dosyayı sil
+        unlink($zipPath);
 
         $response = new Response($zipContents);
         $response->headers->set('Content-Type', 'application/zip');
@@ -101,7 +107,7 @@ final class ImageEditorController extends AbstractController
             'Content-Disposition',
             $response->headers->makeDisposition(
                 ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-                'compressed_images.zip'
+                'crop-kalitehost_compressed'. (new \DateTime())->format('Y-m-d_H.i.s') .'.zip'
             )
         );
         $response->headers->set('Content-Length', strlen($zipContents));
@@ -110,26 +116,13 @@ final class ImageEditorController extends AbstractController
     }
 
 
-    #[Route('/compress', name: 'app_image_compress_form', methods: ['GET'])]
+    #[Route('/goruntu-sikistirma', name: 'app_image_compress_form', methods: ['GET'])]
     public function showCompressForm(): Response
     {
         return $this->render('image/compress.html.twig');
     }
 
-    #[Route('/download/{filename}', name: 'app_image_download')]
-    public function download(string $filename): BinaryFileResponse
-    {
-        $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads/tmp/' . $filename;
-
-        return (new BinaryFileResponse($filePath))
-            ->setContentDisposition(
-                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-                $filename
-            );
-    }
-
-
-    #[Route('/convert', name: 'app_image_convert', methods: ['GET', 'POST'])]
+    #[Route('/goruntu-donusturme', name: 'app_image_convert', methods: ['GET', 'POST'])]
     public function convert(Request $request): Response
     {
         if ($request->isMethod('GET')) {
@@ -143,7 +136,7 @@ final class ImageEditorController extends AbstractController
             return new Response('Geçersiz dosya(lar) veya format!', 400);
         }
 
-        $zipPath = sys_get_temp_dir() . '/converted_' . uniqid() . '.zip';
+        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_converted'. uniqid() . '.zip';
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
             return new Response('ZIP dosyası oluşturulamadı!', 500);
@@ -188,7 +181,8 @@ final class ImageEditorController extends AbstractController
 
         return new BinaryFileResponse($zipPath, 200, [
             'Content-Type' => 'application/zip',
-            'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT . '; filename="converted_images.zip"',
+            'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
+                '; filename="converted_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
         ]);
     }
 
