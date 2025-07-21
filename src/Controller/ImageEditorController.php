@@ -45,10 +45,11 @@ final class ImageEditorController extends AbstractController
 
         $zip = new \ZipArchive();
         $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
-
+//        dd($files);
         if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
             return new Response('Zip dosyası oluşturulamadı!', 500);
         }
+
 
         foreach ($files as $file) {
             if (!$file->isValid()) continue;
