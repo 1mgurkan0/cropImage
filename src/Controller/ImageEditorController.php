@@ -45,11 +45,9 @@ final class ImageEditorController extends AbstractController
 
         $zip = new \ZipArchive();
         $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
-//        dd($files);
         if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
             return new Response('Zip dosyası oluşturulamadı!', 500);
         }
-
 
         foreach ($files as $file) {
             if (!$file->isValid()) continue;
@@ -182,6 +180,16 @@ final class ImageEditorController extends AbstractController
                     $extension = 'jpg';
                     break;
                 case 'png':
+                    $width = imagesx($image);
+                    $height = imagesy($image);
+
+                    $tempImage = imagecreatetruecolor($width, $height);
+                    $white = imagecolorallocate($tempImage, 255, 255, 255);
+                    imagefill($tempImage, 0, 0, $white);
+                    imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
+                    imagedestroy($image);
+                    $image = $tempImage;
+
                     imagepng($image, null, 6);
                     $extension = 'png';
                     break;
@@ -206,6 +214,31 @@ final class ImageEditorController extends AbstractController
                 '; filename="converted_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
         ]);
     }
+
+//    #[Route('/arkaplan-kaldırma' , name:'app_remove_background', methods: ['GET' , 'POST'])]
+//    public function removeBackground(Request $request): Response{
+//        if ($request->isMethod('GET')) {
+//            return $this->render('image/remove_background.html.twig');
+//        }
+//        $files = $request->files->get('images');
+//        $targetFormat = strtolower($request->request->get('format') ?? '');
+//
+//        if (!$files || !is_array($files) || !in_array($targetFormat, ['webp', 'jpeg', 'jpg', 'png'])) {
+//            return new Response('Geçersiz dosya(lar) veya format!', 400);
+//        }
+//
+//        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_converted'. uniqid() . '.zip';
+//        $zip = new ZipArchive();
+//        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+//            return new Response('ZIP dosyası oluşturulamadı!', 500);
+//        }
+//        foreach ($files as $file) {
+//            $imageData = file_get_contents($file->getPathname());
+//
+//
+//        }
+//        return $this->render('image/remove_background.html.twig');
+//    }
 
 
 
