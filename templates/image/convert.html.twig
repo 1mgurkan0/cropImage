@@ -156,7 +156,7 @@
 <body>
 <div class="container my-5">
     <div class="card p-4 shadow-lg converter-card">
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" action="{{ path('app_image_convert') }}" enctype="multipart/form-data">
             <h1 class="card-title text-center mb-4">Görsel Dönüştürücü</h1>
 
             <ul class="intro-text lead mb-5 text-start">
@@ -186,8 +186,8 @@
             <button type="submit" class="btn btn-primary w-100 mt-3 submit-btn">Dönüştür ve İndir</button>
         </form>
     </div>
-
 </div>
+
 <div class="container main-container text-center py-1">
     <div class="row g-4">
         <div class="col-md-6">
@@ -195,7 +195,7 @@
                 <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8..." />
                         </svg>
                     </span>
                     <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
@@ -208,7 +208,7 @@
                 <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
-                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
+                            <path d="..." />
                         </svg>
                     </span>
                     <h2 class="card-title-link mt-3">Görsel Kırpma</h2>

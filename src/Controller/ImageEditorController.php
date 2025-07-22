@@ -40,11 +40,38 @@ final class ImageEditorController extends AbstractController
             return new Response('En fazla 10 görsel yükleyebilirsiniz!', 400);
         }
 
-        $compressionRatio = (int) $request->request->get('compression_ratio', 0);
-        $baseTargetKb = (int) $request->request->get('target_kb', 100);
+        $resizeType = $request->request->get('resize_type', 'pixels');
 
-        if ($baseTargetKb <= 0 && ($compressionRatio <= 0 || $compressionRatio > 100)) {
-            return new Response('Geçersiz hedef boyut veya sıkıştırma oranı!', 400);
+        if ($resizeType === 'pixels') {
+            $targetKb = (int) $request->request->get('target_kb', 100);
+            if ($targetKb <= 0) {
+                return new Response('Geçersiz hedef boyut!', 400);
+            }
+        } else {
+            $compressionRatio = (int) $request->request->get('compression_ratio', 90);
+            if ($compressionRatio <= 0 || $compressionRatio > 100) {
+                return new Response('Geçersiz sıkıştırma oranı!', 400);
+            }
+            $targetKb = null;
+        }
+
+        if ($resizeType === 'pixels' && $targetKb <= 0) {
+            return new Response('Geçersiz hedef boyut!', 400);
+        }
+        if ($resizeType === 'percentage' && ($compressionRatio <= 0 || $compressionRatio > 100)) {
+            return new Response('Geçersiz sıkıştırma oranı!', 400);
+        }
+
+        $firstMime = $files[0]->getMimeType();
+        $formatMap = [
+            'image/jpeg' => 'jpeg',
+            'image/jpg'  => 'jpeg',
+            'image/webp' => 'webp',
+        ];
+        $targetFormat = $formatMap[$firstMime] ?? null;
+
+        if (!$targetFormat) {
+            return new Response('İlk dosya desteklenmeyen formatta!', 400);
         }
 
         $zip = new \ZipArchive();
@@ -56,46 +83,22 @@ final class ImageEditorController extends AbstractController
         foreach ($files as $file) {
             if (!$file->isValid()) continue;
 
-            $mimeType = $file->getMimeType();
             $imageData = file_get_contents($file->getPathname());
-
-            switch ($mimeType) {
-                case 'image/jpeg':
-                    $image = imagecreatefromjpeg($file->getPathname());
-                    $ext = 'jpg';
-                    break;
-                case 'image/png':
-                    $image = imagecreatefrompng($file->getPathname());
-                    $ext = 'png';
-                    break;
-                case 'image/webp':
-                    $image = imagecreatefromwebp($file->getPathname());
-                    $ext = 'webp';
-                    break;
-                default:
-                    continue 2;
-            }
-
+            $image = @imagecreatefromstring($imageData);
             if (!$image) continue;
 
-            $maxWidth = 1024;
-            $maxHeight = 1024;
             $width = imagesx($image);
             $height = imagesy($image);
 
-            if ($width > $maxWidth || $height > $maxHeight) {
-                $ratio = min($maxWidth / $width, $maxHeight / $height);
-                $newWidth = (int)($width * $ratio);
-                $newHeight = (int)($height * $ratio);
+            $tempImage = imagecreatetruecolor($width, $height);
 
-                $resized = imagecreatetruecolor($newWidth, $newHeight);
-                imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                imagedestroy($image);
-                $image = $resized;
-            }
+
+            imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
+            imagedestroy($image);
+            $image = $tempImage;
 
             $originalSizeKb = filesize($file->getPathname()) / 1024;
-            $targetKb = $compressionRatio > 0 ? $originalSizeKb * ($compressionRatio / 100) : $baseTargetKb;
+            $targetSizeKb = $targetKb ?? ($originalSizeKb * ($compressionRatio / 100));
 
             $quality = 95;
             $minQuality = 10;
@@ -103,19 +106,24 @@ final class ImageEditorController extends AbstractController
 
             do {
                 ob_start();
-                if ($ext === 'jpg') {
-                    imagejpeg($image, null, $quality);
-                } elseif ($ext === 'png') {
-                    $pngCompression = 9 - floor(($quality / 100) * 9);
-                    imagepng($image, null, $pngCompression);
-                } elseif ($ext === 'webp') {
-                    imagewebp($image, null, $quality);
+                switch ($targetFormat) {
+                    case 'jpeg':
+                    case 'jpg':
+                        imagejpeg($image, null, $quality);
+                        $ext = 'jpg';
+                        break;
+                    case 'webp':
+                        imagewebp($image, null, $quality);
+                        $ext = 'webp';
+                        break;
+                    default:
+                        continue 3;
                 }
                 $compressedData = ob_get_clean();
 
                 $sizeKb = strlen($compressedData) / 1024;
 
-                if ($sizeKb <= $targetKb || $quality <= $minQuality) {
+                if ($sizeKb <= $targetSizeKb || $quality <= $minQuality) {
                     break;
                 }
 
@@ -133,8 +141,7 @@ final class ImageEditorController extends AbstractController
         return new Response(file_get_contents($zipPath), 200, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
-                '; filename="converted_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
-
+                '; filename="converted_compressed_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
         ]);
     }
 
@@ -178,14 +185,34 @@ final class ImageEditorController extends AbstractController
             ob_start();
             switch ($targetFormat) {
                 case 'webp':
+                    $width = imagesx($image);
+                    $height = imagesy($image);
+
+                    $tempImage = imagecreatetruecolor($width, $height);
+                    imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
+                    imagedestroy($image);
+                    $image = $tempImage;
+
                     imagewebp($image, null, 85);
                     $extension = 'webp';
                     break;
+
                 case 'jpeg':
                 case 'jpg':
+                    $width = imagesx($image);
+                    $height = imagesy($image);
+
+                    $tempImage = imagecreatetruecolor($width, $height);
+                    $white = imagecolorallocate($tempImage, 255, 255, 255);
+                    imagefill($tempImage, 0, 0, $white);
+                    imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
+                    imagedestroy($image);
+                    $image = $tempImage;
+
                     imagejpeg($image, null, 90);
                     $extension = 'jpg';
                     break;
+
                 case 'png':
                     $width = imagesx($image);
                     $height = imagesy($image);
