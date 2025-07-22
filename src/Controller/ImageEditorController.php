@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use ZipArchive;
 
@@ -20,7 +21,10 @@ final class ImageEditorController extends AbstractController
     }
 
     #[Route('/goruntu-sikistirma', name: 'app_image_compress', methods: [ 'POST'])]
-    public function compressDownload(Request $request): Response
+    public function compressDownload
+    (
+        Request $request
+    ): Response
     {
         $files = $request->files->get('image');
 
@@ -142,7 +146,10 @@ final class ImageEditorController extends AbstractController
     }
 
     #[Route('/goruntu-donusturme', name: 'app_image_convert', methods: ['GET', 'POST'])]
-    public function convert(Request $request): Response
+    public function convert
+    (
+        Request $request
+    ): Response
     {
         if ($request->isMethod('GET')) {
             return $this->render('image/convert.html.twig');
@@ -240,6 +247,35 @@ final class ImageEditorController extends AbstractController
 //        return $this->render('image/remove_background.html.twig');
 //    }
 
+    #[Route('/goruntu-kirpma', name: 'app_image_crop', methods: ['GET', 'POST'])]
+    public function crop(Request $request): Response
+    {
+        if ($request->isMethod('GET')) {
+            return $this->render('image/crop.html.twig');
+        }
 
+        $base64Data = $request->request->get('croppedImage');
 
+        if (!$base64Data || strpos($base64Data, 'data:image') !== 0) {
+            return new Response('Geçersiz veri!', 400);
+        }
+
+        $base64Data = preg_replace('#^data:image/\w+;base64,#i', '', $base64Data);
+        $imageData = base64_decode($base64Data);
+
+        if (!$imageData) {
+            return new Response('Base64 decode hatası!', 400);
+        }
+
+        $imageName = 'cropped_' . uniqid() . '.jpg';
+
+        $response = new StreamedResponse(function() use ($imageData) {
+            echo $imageData;
+        });
+
+        $response->headers->set('Content-Type', 'image/jpeg');
+        $response->headers->set('Content-Disposition', ResponseHeaderBag::DISPOSITION_ATTACHMENT, $imageName);
+
+        return $response;
+    }
 }
