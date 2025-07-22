@@ -59,7 +59,7 @@
             background-color: #f1f6ff;
         }
         .file-upload-btn, .submit-btn {
-            background-color: var(--primary-color);
+            background-color: #5d67e6;
             border: none;
             border-radius: 12px;
             padding: 12px 24px;
@@ -149,7 +149,7 @@
         .card-icon svg {
             width: 64px;
             height: 64px;
-            fill: var(--primary-color);
+            color: #5d67e6;
         }
         .card-title-link {
             font-weight: 600;
@@ -219,12 +219,12 @@
             <a href="{{ path('app_image_crop') }}" class="text-decoration-none">
                 <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
-                    <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
+                    <h2 class="card-title-link mt-3">Görsel Kırpma</h2>
+                    <p class="card-text text-center mt-2">İstediğiniz alanı öne çıkarın. Gereksiz detayları kırpın ve sadeleştirin.</p>
                 </div>
             </a>
         </div>
@@ -232,8 +232,8 @@
             <a href="{{ path('app_image_convert') }}" class="text-decoration-none">
                 <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
-                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16">
+                            <path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/>
                         </svg>
                     </span>
                     <h2 class="card-title-link mt-3">Görsel Dönüştürme</h2>
