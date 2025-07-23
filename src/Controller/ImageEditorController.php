@@ -28,7 +28,6 @@ final class ImageEditorController extends AbstractController
     {
         $files = $request->files->get('image');
 
-
         if (!$files) {
             return new Response('Hiç dosya yüklenmedi!', 400);
         }
@@ -42,55 +41,48 @@ final class ImageEditorController extends AbstractController
         }
 
         $resizeType = $request->request->get('resize_type', 'pixels');
+        $targetKb = null;
+        $compressionRatio = null;
 
         if ($resizeType === 'pixels') {
-            $targetKb = (int) $request->request->get('target_kb', 100);
+            $targetKb = (int)$request->request->get('target_kb', 100);
             if ($targetKb <= 0) {
                 return new Response('Geçersiz hedef boyut!', 400);
             }
-        } else {
-            $compressionRatio = (int) $request->request->get('compression_ratio', 90);
+        } elseif ($resizeType === 'percentage') {
+            $compressionRatio = (int)$request->request->get('compression_ratio', 90);
             if ($compressionRatio <= 0 || $compressionRatio > 100) {
                 return new Response('Geçersiz sıkıştırma oranı!', 400);
             }
-            $targetKb = null;
+        } else {
+            return new Response('Geçersiz sıkıştırma türü!', 400);
         }
 
-        if ($resizeType === 'pixels' && $targetKb <= 0) {
-            return new Response('Geçersiz hedef boyut!', 400);
-        }
-        if ($resizeType === 'percentage' && ($compressionRatio <= 0 || $compressionRatio > 100)) {
-            return new Response('Geçersiz sıkıştırma oranı!', 400);
-        }
-
-        $convertedImages = [];
-
-
-        $targetFormat = $request->request->get('target_format', 'webp'); // webp varsayılan
+        $targetFormat = strtolower($request->request->get('target_format', 'webp'));
         $allowedFormats = ['jpeg', 'jpg', 'png', 'webp'];
 
         if (!in_array($targetFormat, $allowedFormats)) {
             return new Response('Geçersiz hedef format!', 400);
         }
 
-        if (!$targetFormat) {
-            return new Response('İlk dosya desteklenmeyen formatta!', 400);
-        }
-
-        $zip = new \ZipArchive();
-
-        $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
-        if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
-            return new Response('Zip dosyası oluşturulamadı!', 500);
-        }
+        $convertedImages = [];
 
         foreach ($files as $file) {
-            if (!$file->isValid()) continue;
+            if (!$file->isValid()) {
+                continue;
+            }
+
+            $mimeType = $file->getMimeType();
+            if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'])) {
+                continue;
+            }
 
             $imageData = file_get_contents($file->getPathname());
-            $image = @imagecreatefromstring($imageData); // ✅ Eksik olan satır
+            $image = @imagecreatefromstring($imageData);
 
-            if (!$image) continue;
+            if (!$image) {
+                continue;
+            }
 
             if (!imageistruecolor($image)) {
                 $width = imagesx($image);
@@ -107,6 +99,7 @@ final class ImageEditorController extends AbstractController
             $quality = 95;
             $minQuality = 10;
             $step = 10;
+            $compressedData = null;
 
             do {
                 ob_start();
@@ -118,14 +111,16 @@ final class ImageEditorController extends AbstractController
                         break;
 
                     case 'png':
-                        $pngQuality = (int) round((9 - ($quality / 100 * 9)));
+                        $pngQuality = (int)round((9 - ($quality / 100 * 9)));
                         $pngQuality = max(0, min(9, $pngQuality));
 
                         $width = imagesx($image);
                         $height = imagesy($image);
                         $tempImage = imagecreatetruecolor($width, $height);
-                        $white = imagecolorallocate($tempImage, 255, 255, 255);
-                        imagefill($tempImage, 0, 0, $white);
+                        imagealphablending($tempImage, false);
+                        imagesavealpha($tempImage, true);
+                        $transparent = imagecolorallocatealpha($tempImage, 0, 0, 0, 127);
+                        imagefill($tempImage, 0, 0, $transparent);
                         imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
                         imagedestroy($image);
                         $image = $tempImage;
@@ -135,11 +130,9 @@ final class ImageEditorController extends AbstractController
                         break;
 
                     case 'webp':
-                        if (!imagewebp($image, null, $quality)) {
-                            ob_end_clean();
-                            continue 2;
-                        }
-                        $compressedData = ob_get_clean();
+                        imagealphablending($image, false);
+                        imagesavealpha($image, true);
+                        imagewebp($image, null, $quality);
                         $ext = 'webp';
                         break;
 
@@ -149,7 +142,6 @@ final class ImageEditorController extends AbstractController
                 }
 
                 $compressedData = ob_get_clean();
-
                 $sizeKb = strlen($compressedData) / 1024;
 
                 if ($sizeKb <= $targetSizeKb || $quality <= $minQuality) {
@@ -161,11 +153,19 @@ final class ImageEditorController extends AbstractController
 
             imagedestroy($image);
 
+            if (!$compressedData) {
+                continue;
+            }
+
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $convertedImages[] = [
                 'filename' => $filename . '.' . $ext,
                 'data' => $compressedData,
             ];
+        }
+
+        if (count($convertedImages) === 0) {
+            return new Response('Dönüştürülecek geçerli görsel bulunamadı!', 400);
         }
 
         if (count($convertedImages) === 1) {
@@ -178,27 +178,26 @@ final class ImageEditorController extends AbstractController
                 'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
                     '; filename="' . $img['filename'] . '"',
             ]);
-        } elseif (count($convertedImages) > 1) {
-            $zipPath = sys_get_temp_dir() . '/converted_' . uniqid() . '.zip';
-            $zip = new \ZipArchive();
-            if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
-                return new Response('Zip dosyası oluşturulamadı!', 500);
-            }
-
-            foreach ($convertedImages as $img) {
-                $zip->addFromString($img['filename'], $img['data']);
-            }
-
-            $zip->close();
-
-            return new BinaryFileResponse($zipPath, 200, [
-                'Content-Type' => 'application/zip',
-                'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
-                    '; filename="converted_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
-            ]);
-        } else {
-            return new Response('Dönüştürülecek geçerli görsel bulunamadı!', 400);
         }
+
+        $zipPath = sys_get_temp_dir() . '/converted_' . uniqid() . '.zip';
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
+            return new Response('Zip dosyası oluşturulamadı!', 500);
+        }
+
+        foreach ($convertedImages as $img) {
+            $zip->addFromString($img['filename'], $img['data']);
+        }
+
+        $zip->close();
+
+        return new BinaryFileResponse($zipPath, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
+                '; filename="converted_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
+        ]);
     }
 
     #[Route('/goruntu-sikistirma', name: 'app_image_compress_form', methods: ['GET'])]
