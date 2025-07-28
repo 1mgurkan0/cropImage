@@ -106,6 +106,9 @@ class SeoAnalyzerService
         if (mb_strlen($meta['title']) > 60) {
             $report['issues'][] = 'Title 60 karakterden uzun (' . mb_strlen($meta['title']) . ' karakter).';
         }
+        if (mb_strlen($meta['title']) < 50) {
+            $report['issues'][] = 'Title 50 karakterden kısa (' . mb_strlen($meta['title']) . ' karakter).';
+        }
         if (empty($meta['title'])) {
             $report['issues'][] = 'Title etiketi boş veya bulunamadı.';
         }

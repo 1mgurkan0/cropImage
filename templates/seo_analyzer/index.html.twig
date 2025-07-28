@@ -1,389 +1,347 @@
 {% block stylesheets %}
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-
-        body { padding-top: 1rem; padding-bottom: 2rem; }
-
-        .container { max-width: 1200px; }
-
-        .hidden { display: none; }
-
-        #progress-container { margin-top: 1.5rem; }
-
-        #results-container table { table-layout: fixed; }
-
-        #results-container th, #results-container td { word-wrap: break-word; }
-
-        #results-container td.status { width: 40px; text-align: center; }
-
-        #results-container td.url { width: 25%; }
-
-        #results-container td.issues ul { margin: 0; padding-left: 1rem; }
-
-        .status-icon { font-size: 1.2rem; }
-
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f0f4f8;
+            --card-bg-color: #ffffff;
+            --text-color: #34495e;
+            --secondary-text-color: #7f8c8d;
+            --border-color: #e0e6ed;
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        html,body {
+            height: 100%;
+            background-color: #f0f4f8;
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+        }
+        .hidden {
+            background-color: #f0f4f8;
+            display: none;
+        }
+        #progress-container {
+            margin-top: 1.5rem;
+        }
+        #results-container table {
+            table-layout: fixed;
+        }
+        #results-container th, #results-container td {
+            word-wrap: break-word;
+        }
+        #results-container td.status {
+            width: 40px;
+            text-align: center;
+        }
+        #results-container td.url {
+            width: 25%;
+        }
+        #results-container td.issues ul {
+            margin: 0;
+            padding-left: 1rem;
+            color: #FFFFFF ;
+        }
+        .status-icon {
+            font-size: 1.2rem;
+            color: #5d67e6;
+        }
         .status .loader {
-
             display: inline-block;
-
             width: 1rem;
-
             height: 1rem;
-
             border: 2px solid currentColor;
-
             border-right-color: transparent;
-
             border-radius: 50%;
-
             animation: spin .75s linear infinite;
-
+            color: #5d67e6;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        tr[data-status="processed"] {
+            background-color: rgba(68, 189, 133, 0.08);
+        }
+        tr[data-status="error"] {
+            background-color: rgba(239, 93, 93, 0.1);
+        }
+        .status-ok {
+            color: #44bd85;
+        }
+        .status-error {
+            color: #ef5d5d;
+        }
+        h1, h2, h3 {
+            color: #34495e;
+        }
+        p, small, label, th, td {
+            color: #FFFFFF ;
+        }
+        a {
+            color: #5d67e6;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        tr[data-status="processed"] { background-color: rgba(68, 189, 133, 0.08); }
-
-        tr[data-status="error"] { background-color: rgba(239, 93, 93, 0.1); }
-
-        .status-ok { color: var(--pico-color-green-500); }
-
-        .status-error { color: var(--pico-color-red-500); }
-
+        . .converter-card {
+            background-color: var(--card-bg-color);
+            border-radius: 24px;
+            box-shadow: var(--shadow-light);
+            padding: 2.5rem;
+            border: none;
+        }
+        .card-title {
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        .feature-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .card-icon {
+            font-size: 3rem;
+            color: #5d67e6;
+            margin-bottom: 1rem;
+        }
+        .card-title-link {
+            font-weight: 600;
+            color: #1a2a4b;
+            text-decoration: none;
+        }
+        .card-text {
+            color: #6c757d;
+        }
     </style>
-
 {% endblock %}
-
 
 {% block body %}
-
     <main class="container">
+        <div class="card p-4 shadow-lg converter-card">
+            <hgroup>
+                <h1>Asenkron SEO Analiz Aracı</h1>
+                <h2>Sitemap'teki sayfaları anlık olarak analiz edin.</h2>
+            </hgroup>
 
-        <hgroup>
+            <form id="sitemap-form">
+                <label for="sitemap_url">Sitemap URL</label>
+                <input type="url" id="sitemap_url" name="sitemap_url" placeholder="https://example.com/sitemap.xml" required value="https://pico-tr.com/sitemap.xml">
+                <small>Lütfen .xml veya .xml.gz ile biten tam sitemap adresini girin. Site haritası endeksleri de desteklenir.</small>
+                <button type="submit" id="submit-btn" style="background-color:#4a90e2">URL'leri Getir ve Analizi Başlat</button>
+            </form>
 
-            <h1>Asenkron SEO Analiz Aracı</h1>
-
-            <h2>Sitemap'teki sayfaları anlık olarak analiz edin.</h2>
-
-        </hgroup>
-
-
-        <form id="sitemap-form">
-
-            <label for="sitemap_url">Sitemap URL</label>
-
-            <input type="url" id="sitemap_url" name="sitemap_url" placeholder="https://example.com/sitemap.xml" required value="https://pico-tr.com/sitemap.xml">
-
-            <small>Lütfen .xml veya .xml.gz ile biten tam sitemap adresini girin. Site haritası endeksleri de desteklenir.</small>
-
-            <button type="submit" id="submit-btn">URL'leri Getir ve Analizi Başlat</button>
-
-        </form>
-
-
-        <div id="progress-container" class="hidden">
-
-            <h3 id="progress-title">Analiz İlerlemesi</h3>
-
-            <progress id="progress-bar" value="0" max="100"></progress>
-
-            <p id="progress-text">0/0 URL analiz edildi.</p>
-
-        </div>
-
-
-        <div id="results-container" class="hidden">
-
-            <hr>
-
-            <h3>Analiz Sonuçları</h3>
-
-            <div class="overflow-auto">
-
-                <table>
-
-                    <thead>
-
-                    <tr>
-
-                        <th class="status">Durum</th>
-
-                        <th class="url">URL</th>
-
-                        <th>Title</th>
-
-                        <th>Description</th>
-
-                        <th>H1</th>
-
-                        <th class="issues">Bulunan Sorunlar</th>
-
-                    </tr>
-
-                    </thead>
-
-                    <tbody id="results-tbody"></tbody>
-
-                </table>
-
+            <div id="progress-container" class="hidden" >
+                <h3 id="progress-title">Analiz İlerlemesi</h3>
+                <progress id="progress-bar" value="0" max="100"></progress>
+                <p id="progress-text">0/0 URL analiz edildi.</p>
             </div>
 
+            <div id="results-container" class="hidden">
+                <hr>
+                <h3>Analiz Sonuçları</h3>
+                <div class="overflow-auto">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th class="status">Durum</th>
+                            <th class="url">URL</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>H1</th>
+                            <th style="color:#FFFFFF !important;">Bulunan Sorunlar</th>
+                        </tr>
+                        </thead>
+                        <tbody id="results-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-
     </main>
 
+    <div class="container main-container text-center py-4">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <a href="{{ path('app_image_compress') }}" class="text-decoration-none">
+                    <div class="card p-5 feature-card  h-100 d-flex flex-column align-items-center justify-content-center" >
+                    <span class="card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                        </svg>
+                    </span>
+                        <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
+                        <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ path('app_image_convert') }}" class="text-decoration-none">
+                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
+                    <span class="card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                        </svg>
+
+                    </span>
+                        <h2 class="card-title-link mt-3">Görsel Dönüştürme</h2>
+                        <p class="card-text text-center mt-2">Farklı formatlara hızlı ve kolay dönüştürme.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ path('seo_analyzer') }}" class="text-decoration-none">
+                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
+                    <span class="card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                    </span>
+                        <h2 class="card-title-link mt-3 text-center">Seo Analyzer</h2>
+                        <p class="card-text text-center mt-2">Web sitenizin SEO performansını anında analiz edin. Eksiklerinizi görün ve iyileştirme fırsatlarını keşfedin!</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
-
 {% block javascripts %}
-
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
     <script>
-
         $(function() {
-
             const sitemapForm = $('#sitemap-form');
-
             const submitBtn = $('#submit-btn');
-
             const progressContainer = $('#progress-container');
-
             const progressBar = $('#progress-bar');
-
             const progressText = $('#progress-text');
-
             const resultsContainer = $('#results-container');
-
             const resultsTbody = $('#results-tbody');
-
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
 
-
             sitemapForm.on('submit', function(e) {
-
                 e.preventDefault();
-
                 const sitemapUrl = $('#sitemap_url').val();
 
-
                 if (!sitemapUrl) {
-
                     alert('Lütfen geçerli bir sitemap URL\'si girin.');
-
                     return;
-
                 }
-
 
                 resetUI();
-
                 submitBtn.attr('aria-busy', 'true').prop('disabled', true);
 
-
                 $.post('{{ path("api_get_urls") }}', { sitemap_url: sitemapUrl })
-
                     .done(function(response) {
-
                         if (response.success) {
-
                             populateTable(response.urls);
-
                             processQueue();
-
                         } else {
-
                             alert('Hata: ' + response.message);
-
                             resetUI();
-
                         }
-
                     })
-
                     .fail(function() {
-
                         alert('Sunucuya bağlanırken bir hata oluştu. Lütfen tekrar deneyin.');
-
                         resetUI();
-
                     });
-
             });
 
-
             function resetUI() {
-
                 submitBtn.removeAttr('aria-busy').prop('disabled', false);
-
                 progressContainer.addClass('hidden');
-
                 resultsContainer.addClass('hidden');
-
                 resultsTbody.empty();
-
                 totalUrls = processedUrls = errorCount = 0;
-
             }
-
 
             function populateTable(urls) {
-
                 totalUrls = urls.length;
-
                 if (totalUrls === 0) {
-
                     alert('Site haritasında hiç URL bulunamadı.');
-
                     resetUI();
-
                     return;
-
                 }
-
 
                 urls.forEach(url => {
-
-                    const row = `<tr data-url="${url}" data-status="pending">
-
-<td class="status"><div class="status-icon">⚪</div></td>
-
-<td class="url"><a href="${url}" target="_blank" rel="noopener">${url}</a></td>
-
-<td class="title"></td>
-
-<td class="description"></td>
-
-<td class="h1"></td>
-
-<td class="issues"></td>
-
-</tr>`;
-
+                    const row = `
+                        <tr data-url="${url}" data-status="pending">
+                        <td class="status"><div class="status-icon">⚪</div></td>
+                        <td class="url"><a href="${url}" target="_blank" rel="noopener">${url}</a></td>
+                        <td class="title"></td>
+                        <td class="description"></td>
+                        <td class="h1"></td>
+                        <td class="issues"></td>
+                        </tr>`;
                     resultsTbody.append(row);
-
                 });
 
-
                 progressContainer.removeClass('hidden');
-
                 resultsContainer.removeClass('hidden');
-
                 updateProgress();
-
             }
 
-
             function processQueue() {
-
                 const nextRow = resultsTbody.find('tr[data-status="pending"]').first();
 
-
                 if (!nextRow.length) {
-
                     submitBtn.removeAttr('aria-busy').prop('disabled', false);
-
                     $('#progress-title').text(`Analiz Tamamlandı! (${errorCount} hatalı sayfa bulundu)`);
-
                     return;
-
                 }
 
-
                 const url = nextRow.data('url');
-
                 const statusIcon = nextRow.find('.status .status-icon');
-
 
                 statusIcon.html('<div class="loader"></div>');
 
-
                 $.post('{{ path("api_analyze_url") }}', { url: url })
-
                     .done(function(response) {
-
                         if (response.success) {
-
                             updateRow(nextRow, response.data);
-
                         } else {
-
                             updateRow(nextRow, { issues: [response.message || 'Bilinmeyen hata'], status_ok: false });
-
                         }
-
                     })
-
                     .fail(function() {
-
                         updateRow(nextRow, { issues: ['Sunucu yanıt vermedi veya hata oluştu.'], status_ok: false });
-
                     })
-
                     .always(function() {
-
                         processedUrls++;
-
                         updateProgress();
-
                         processQueue();
-
                     });
-
             }
-
 
             function updateRow(row, data) {
-
                 const escapeHtml = text => $('<div>').text(text).html();
 
-
                 row.find('.title').text(data.title || '');
-
                 row.find('.description').text(data.description || '');
-
                 row.find('.h1').text(data.h1 || '');
 
-
                 const statusIcon = row.find('.status .status-icon');
-
                 if (data.status_ok) {
-
                     statusIcon.html('✅').addClass('status-ok');
-
                     row.attr('data-status', 'processed');
-
                 } else {
-
                     errorCount++;
-
                     statusIcon.html('❌').addClass('status-error');
-
                     row.attr('data-status', 'error');
-
                     const issuesHtml = '<ul>' + data.issues.map(issue => `<li>${escapeHtml(issue)}</li>`).join('') + '</ul>';
-
                     row.find('.issues').html(issuesHtml);
-
                 }
-
             }
-
 
             function updateProgress() {
-
                 const percent = totalUrls ? (processedUrls / totalUrls) * 100 : 0;
-
                 progressBar.val(percent);
-
                 progressText.text(`${processedUrls}/${totalUrls} URL analiz edildi.`);
-
             }
-
         });
-
     </script>
-
 {% endblock %}

@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class SeoAnalyzerController extends AbstractController
 {
-    #[Route('/seo-analyzer', name: 'seo_analyzer', methods: ['GET'])]
+    #[Route('/seo-analizi', name: 'seo_analyzer', methods: ['GET'])]
     public function index()
     {
         return $this->render('seo_analyzer/index.html.twig');
