@@ -17,21 +17,44 @@ class SeoAnalyzerController extends AbstractController
         return $this->render('seo_analyzer/index.html.twig');
     }
 
-    #[Route('/api/seo/get-urls', name: 'api_get_urls', methods: ['POST'])]
-    public function getUrls(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
+    #[Route('/api/seo/get-sitemaps', name: 'api_get_sitemaps', methods: ['POST'])]
+    public function getSitemaps(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
+    {
+        $domain = $request->request->get('domain');
+        if (!filter_var($domain, FILTER_VALIDATE_URL)) {
+            return $this->json(['success' => false, 'message' => 'Geçersiz Domain.']);
+        }
+
+        $sitemapUrl = $seoAnalyzer->getSitemapFromDomain($domain);
+
+        if (!$sitemapUrl) {
+            return $this->json(['success' => false, 'message' => 'robots.txt bulunamadı veya içinde sitemap URLsi yok.']);
+        }
+
+        $sitemapData = $seoAnalyzer->parseSitemap($sitemapUrl);
+
+        if ($sitemapData === false) {
+            return $this->json(['success' => false, 'message' => 'Sitemap okunamadı veya geçersiz formatta.']);
+        }
+
+        return $this->json(['success' => true, 'data' => $sitemapData]);
+    }
+
+    #[Route('/api/seo/get-urls-from-sitemap', name: 'api_get_urls_from_sitemap', methods: ['POST'])]
+    public function getUrlsFromSitemap(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
     {
         $sitemapUrl = $request->request->get('sitemap_url');
         if (!filter_var($sitemapUrl, FILTER_VALIDATE_URL)) {
-            return $this->json(['success' => false, 'message' => 'Geçersiz Sitemap URL\'si.']);
+            return $this->json(['success' => false, 'message' => 'Geçersiz Sitemap URLsi.']);
         }
 
-        $urls = $seoAnalyzer->getUrlsFromSitemap($sitemapUrl);
+        $sitemapData = $seoAnalyzer->parseSitemap($sitemapUrl);
 
-        if (!$urls) {
-            return $this->json(['success' => false, 'message' => 'Sitemap bulunamadı, okunamadı veya içinde URL yok.']);
+        if ($sitemapData === false || $sitemapData['type'] !== 'urls') {
+            return $this->json(['success' => false, 'message' => 'URL listesi alınamadı veya geçersiz sitemap.']);
         }
 
-        return $this->json(['success' => true, 'urls' => $urls]);
+        return $this->json(['success' => true, 'urls' => $sitemapData['urls']]);
     }
 
     #[Route('/api/seo/analyze-url', name: 'api_analyze_url', methods: ['POST'])]

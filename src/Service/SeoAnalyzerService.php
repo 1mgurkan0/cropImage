@@ -44,7 +44,21 @@ class SeoAnalyzerService
         return array_map('trim', $result);
     }
 
-    public function getUrlsFromSitemap(string $sitemapUrl): array|false
+    public function getSitemapFromDomain(string $domain): string|false
+    {
+        $robotsUrl = rtrim($domain, '/') . '/robots.txt';
+        $content = $this->fetchContent($robotsUrl)['html'];
+
+        if ($content === false) {
+            return false;
+        }
+
+        preg_match('/^Sitemap:\s*(.*)$/im', $content, $matches);
+
+        return $matches[1] ?? false;
+    }
+
+    public function parseSitemap(string $sitemapUrl): array|false
     {
         $content = $this->fetchContent($sitemapUrl)['html'];
         if ($content === false) {
@@ -63,20 +77,23 @@ class SeoAnalyzerService
             $xml = new SimpleXMLElement($content, LIBXML_NOCDATA);
             $urls = [];
 
+            // Check for sitemap index
             if (isset($xml->sitemap)) {
                 foreach ($xml->sitemap as $sitemapNode) {
-                    $subUrls = $this->getUrlsFromSitemap((string) $sitemapNode->loc);
-                    if ($subUrls) {
-                        $urls = array_merge($urls, $subUrls);
-                    }
+                    $urls[] = (string)$sitemapNode->loc;
                 }
-            } elseif (isset($xml->url)) {
+                return ['type' => 'index', 'sitemaps' => array_unique($urls)];
+            }
+
+            // Check for urlset
+            if (isset($xml->url)) {
                 foreach ($xml->url as $urlNode) {
                     $urls[] = (string)$urlNode->loc;
                 }
+                return ['type' => 'urls', 'urls' => array_unique($urls)];
             }
 
-            return array_unique($urls);
+            return false;
         } catch (\Exception) {
             return false;
         }

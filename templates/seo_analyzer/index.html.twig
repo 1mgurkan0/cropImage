@@ -74,7 +74,7 @@
             color: #34495e;
         }
         p, small, label, th, td {
-            color: #FFFFFF ;
+            color: #34495e;
         }
         a {
             color: #5d67e6;
@@ -118,6 +118,18 @@
         .card-text {
             color: #6c757d;
         }
+        .submit-btn {
+            background-color: #5d67e6;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .submit-btn:hover {
+            background-color: #3871c2;
+            transform: translateY(-2px);
+        }
     </style>
 {% endblock %}
 
@@ -129,12 +141,19 @@
                 <h2>Sitemap'teki sayfaları anlık olarak analiz edin.</h2>
             </hgroup>
 
-            <form id="sitemap-form">
-                <label for="sitemap_url">Sitemap URL</label>
-                <input type="url" id="sitemap_url" name="sitemap_url" placeholder="https://example.com/sitemap.xml" required value="https://pico-tr.com/sitemap.xml">
-                <small>Lütfen .xml veya .xml.gz ile biten tam sitemap adresini girin. Site haritası endeksleri de desteklenir.</small>
-                <button type="submit" id="submit-btn" style="background-color:#4a90e2">URL'leri Getir ve Analizi Başlat</button>
+            <form id="domain-form">
+                <label for="domain_url">Domain URL</label>
+                <input type="url" id="domain_url" name="domain_url" placeholder="https://example.com" required >
+                <small>Lütfen analiz edilecek sitenin ana domain adresini girin. Sistem robots.txt dosyasından sitemap'i otomatik bulacaktır.</small>
+                <button type="submit" id="submit-btn" class="submit-btn">Sitemap Kategorilerini Getir</button>
             </form>
+
+            <div id="sitemap-selection-container" class="hidden ms-3 me-3 ">
+                <h4>Analiz Edilecek Sitemap Kategorisini Seçin</h4>
+                <div class="row">
+                    <div class="col bg-black py-3 px-3" style="border-radius: 10px;" id="sitemap-links"></div>
+                </div>
+            </div>
 
             <div id="progress-container" class="hidden" >
                 <h3 id="progress-title">Analiz İlerlemesi</h3>
@@ -214,8 +233,10 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         $(function() {
-            const sitemapForm = $('#sitemap-form');
+            const domainForm = $('#domain-form');
             const submitBtn = $('#submit-btn');
+            const sitemapSelectionContainer = $('#sitemap-selection-container');
+            const sitemapLinks = $('#sitemap-links');
             const progressContainer = $('#progress-container');
             const progressBar = $('#progress-bar');
             const progressText = $('#progress-text');
@@ -223,19 +244,58 @@
             const resultsTbody = $('#results-tbody');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
 
-            sitemapForm.on('submit', function(e) {
+            domainForm.on('submit', function(e) {
                 e.preventDefault();
-                const sitemapUrl = $('#sitemap_url').val();
+                const domainUrl = $('#domain_url').val();
 
-                if (!sitemapUrl) {
-                    alert('Lütfen geçerli bir sitemap URL\'si girin.');
+                if (!domainUrl) {
+                    alert('Lütfen geçerli bir domain URL si girin.');
                     return;
                 }
 
                 resetUI();
-                submitBtn.attr('aria-busy', 'true').prop('disabled', true);
+                submitBtn.attr('aria-busy', 'true').prop('disabled', true).text('Sitemap Aranıyor...');
 
-                $.post('{{ path("api_get_urls") }}', { sitemap_url: sitemapUrl })
+                $.post('{{ path("api_get_sitemaps") }}', { domain: domainUrl })
+                    .done(function(response) {
+                        if (response.success) {
+                            if (response.data.type === 'index') {
+                                displaySitemapSelection(response.data.sitemaps);
+                            } else if (response.data.type === 'urls') {
+                                populateTable(response.data.urls);
+                                processQueue();
+                            }
+                        } else {
+                            alert('Hata: ' + response.message);
+                            resetUI();
+                        }
+                    })
+                    .fail(function() {
+                        alert('Sunucuya bağlanırken bir hata oluştu. Lütfen tekrar deneyin.');
+                        resetUI();
+                    })
+                    .always(function() {
+                         submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Sitemap Kategorilerini Getir');
+                    });
+            });
+
+            sitemapLinks.on('click', 'a', function(e) {
+                e.preventDefault();
+
+
+                resultsTbody.empty();
+                processedUrls = 0;
+                errorCount = 0;
+                totalUrls = 0;
+                $('#progress-title').text('Analiz İlerlemesi');
+                updateProgress();
+
+                const sitemapUrl = $(this).data('url');
+                sitemapSelectionContainer.addClass('hidden');
+                resultsContainer.removeClass('hidden');
+                progressContainer.removeClass('hidden');
+
+                $.post('{{ path("api_get_urls_from_sitemap") }}', { sitemap_url: sitemapUrl })
                     .done(function(response) {
                         if (response.success) {
                             populateTable(response.urls);
@@ -246,20 +306,37 @@
                         }
                     })
                     .fail(function() {
-                        alert('Sunucuya bağlanırken bir hata oluştu. Lütfen tekrar deneyin.');
+                        alert('Seçilen sitemap yüklenirken bir hata oluştu.');
                         resetUI();
                     });
             });
 
             function resetUI() {
-                submitBtn.removeAttr('aria-busy').prop('disabled', false);
+                submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Sitemap Kategorilerini Getir');
                 progressContainer.addClass('hidden');
                 resultsContainer.addClass('hidden');
+                sitemapSelectionContainer.addClass('hidden');
+                sitemapLinks.empty();
                 resultsTbody.empty();
                 totalUrls = processedUrls = errorCount = 0;
             }
 
+            function displaySitemapSelection(sitemaps) {
+                sitemapLinks.empty();
+                sitemaps.forEach(url => {
+                    const fileName = url.split('/').pop();
+                    const link = `<a href="#" data-url="${url}" class="outline text-white" style="margin-right: 10px; margin-bottom: 10px;">${fileName}</a>`;
+                    sitemapLinks.append(link);
+                });
+                sitemapSelectionContainer.removeClass('hidden');
+            }
+
             function populateTable(urls) {
+
+                processedUrls = 0;
+                errorCount = 0;
+                $('#progress-title').text('Analiz İlerlemesi');
+
                 totalUrls = urls.length;
                 if (totalUrls === 0) {
                     alert('Site haritasında hiç URL bulunamadı.');
@@ -274,7 +351,7 @@
                         <td class="url"><a href="${url}" target="_blank" rel="noopener">${url}</a></td>
                         <td class="title"></td>
                         <td class="description"></td>
-                        <td class="h1"></td>
+                        <td class="h1" style="font-size:20px ; color: #FFFFFF ;"></td>
                         <td class="issues"></td>
                         </tr>`;
                     resultsTbody.append(row);
@@ -283,6 +360,7 @@
                 progressContainer.removeClass('hidden');
                 resultsContainer.removeClass('hidden');
                 updateProgress();
+                processQueue();
             }
 
             function processQueue() {
@@ -290,7 +368,7 @@
 
                 if (!nextRow.length) {
                     submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                    $('#progress-title').text(`Analiz Tamamlandı! (${errorCount} hatalı sayfa bulundu)`);
+                    $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi!)`);
                     return;
                 }
 
