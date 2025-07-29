@@ -356,25 +356,60 @@ final class ImageEditorController extends AbstractController
 
         $base64Data = $request->request->get('croppedImage');
 
-        if (!$base64Data || strpos($base64Data, 'data:image') !== 0) {
-            return new Response('Geçersiz veri!', 400);
+        if (!$base64Data || !preg_match('#^data:image/(\w+);base64,#i', $base64Data, $matches)) {
+            return new Response('Geçersiz görsel verisi!', 400);
         }
 
-        $base64Data = preg_replace('#^data:image/\w+;base64,#i', '', $base64Data);
-        $imageData = base64_decode($base64Data);
+        $extension = strtolower($matches[1]);
+        $validExtensions = ['jpeg', 'jpg', 'png', 'webp'];
+
+        if (!in_array($extension, $validExtensions)) {
+            return new Response("Desteklenmeyen format: .$extension", 400);
+        }
+
+        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Data));
 
         if (!$imageData) {
             return new Response('Base64 decode hatası!', 400);
         }
 
-        $imageName = 'cropped_' . uniqid() . '.jpg';
+        $image = imagecreatefromstring($imageData);
+        if (!$image) {
+            return new Response('Görsel oluşturulamadı!', 400);
+        }
 
-        $response = new StreamedResponse(function() use ($imageData) {
-            echo $imageData;
+        $imageName = 'cropped_' . uniqid() . '.' . $extension;
+
+        $response = new StreamedResponse(function () use ($image, $extension) {
+            switch ($extension) {
+                case 'png':
+                    imagepng($image, null, 0);
+                    break;
+                case 'jpeg':
+                case 'jpg':
+                    imagejpeg($image, null, 100);
+                    break;
+                case 'webp':
+                    imagewebp($image, null, 100);
+                    break;
+            }
+
+            imagedestroy($image);
         });
 
-        $response->headers->set('Content-Type', 'image/jpeg');
-        $response->headers->set('Content-Disposition', ResponseHeaderBag::DISPOSITION_ATTACHMENT, $imageName);
+        $contentType = match ($extension) {
+            'png' => 'image/png',
+            'jpeg', 'jpg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'application/octet-stream',
+        };
+
+        $response->headers->set('Content-Type', $contentType);
+        $response->headers->set(
+            'Content-Disposition',
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $imageName
+        );
 
         return $response;
     }

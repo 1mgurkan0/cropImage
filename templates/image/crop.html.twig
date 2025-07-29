@@ -245,6 +245,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let cropper;
+    let originalImageType;
     const imageInput = document.getElementById('imageInput');
     const cropperPreview = document.getElementById('cropper-preview');
     const croppedImageInput = document.getElementById('croppedImage');
@@ -284,6 +285,7 @@
     function handleFiles(files) {
         const file = files[0];
         if (file) {
+            originalImageType = file.type; // Store the original image type
             const reader = new FileReader();
             reader.onload = function (e) {
                 cropperPreview.src = e.target.result;
@@ -309,7 +311,7 @@
 
         if (cropper) {
             const canvas = cropper.getCroppedCanvas();
-            croppedImageInput.value = canvas.toDataURL('image/jpeg');
+            croppedImageInput.value = canvas.toDataURL(originalImageType);
 
             form.submit();
         } else {
