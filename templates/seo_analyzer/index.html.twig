@@ -63,10 +63,10 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         tr[data-status="processed"] {
-            background-color: rgba(68, 189, 133, 0.08); /* Light green for processed rows */
+            background-color: rgba(68, 189, 133, 0.08);
         }
         tr[data-status="error"] {
-            background-color: rgba(239, 93, 93, 0.1); /* Light red for error rows */
+            background-color: rgba(239, 93, 93, 0.1);
         }
         .status-ok {
             color: #44bd85; /* Green checkmark */
@@ -237,13 +237,13 @@
         <div class="row g-4">
             <div class="col-md-3">
                 <a href="{{ path('app_image_compress') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card  h-100 d-flex flex-column align-items-center justify-content-center" >
+                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
                         </svg>
                     </span>
-                        <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
+                        <h2 class="card-title-link mt-3 text-center">Görsel Sıkıştırma</h2>
                         <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
                     </div>
                 </a>
@@ -252,8 +252,8 @@
                 <a href="{{ path('app_image_convert') }}" class="text-decoration-none">
                     <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
                     <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+                       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16">
+                            <path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/>
                         </svg>
 
                     </span>
@@ -468,7 +468,7 @@
             function updateProgress() {
                 const percent = totalUrls ? (processedUrls / totalUrls) * 100 : 0;
                 progressBar.val(percent);
-                progressText.text(`${processedUrls}/${totalUrls} URL analiz edildi.`);
+                progressText.text(`${totalUrls}/${totalUrls} URL analiz edildi.`);
             }
         });
     </script>

@@ -67,6 +67,7 @@
 
 </div>
 <div class="container-fluid">
+    {% block shorturl %}
     <div class="row g-4 ">
         <div class="col-md-3">
             <a href="{{ path('app_image_compress') }}" class="text-decoration-none">
@@ -121,8 +122,8 @@
                 </div>
             </a>
         </div>
-
     </div>
+    {% endblock %}
 </div>
 </div>
 </body>

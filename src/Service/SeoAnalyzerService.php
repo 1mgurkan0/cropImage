@@ -101,6 +101,7 @@ class SeoAnalyzerService
 
     public function analyzeUrl(string $url): array
     {
+        sleep(1);
         $fetch = $this->fetchContent($url);
         $html = $fetch['html'];
         $report = [
