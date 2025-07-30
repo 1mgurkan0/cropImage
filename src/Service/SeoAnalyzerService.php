@@ -99,7 +99,7 @@ class SeoAnalyzerService
         }
     }
 
-    public function analyzeUrl(string $url, bool $checkBrokenLinks = false): array
+    public function analyzeUrl(string $url): array
     {
         $fetch = $this->fetchContent($url);
         $html = $fetch['html'];
@@ -146,23 +146,20 @@ class SeoAnalyzerService
             $report['issues'][] = 'H1 etiketi bulunamadı.';
         }
 
-        if ($checkBrokenLinks) {
-            $brokenLinks = $this->findBrokenLinks($html, $url);
-            if (!empty($brokenLinks)) {
-                $report['issues'][] = 'Kırık linkler bulundu:';
-                foreach ($brokenLinks as $link) {
-                    $report['issues'][] = sprintf('- %s (HTTP %d)', $link['url'], $link['http_code']);
-                }
-            }
-        }
-
         $report['status_ok'] = count($report['issues']) === 0;
 
         return ['success' => true, 'data' => $report];
     }
 
-    private function findBrokenLinks(string $html, string $baseUrl): array
+    public function getBrokenLinksForUrl(string $url): array
     {
+        $fetch = $this->fetchContent($url);
+        $html = $fetch['html'];
+
+        if ($html === false) {
+            return ['success' => false, 'message' => 'Sayfa alınamadı (HTTP ' . $fetch['http_code'] . ' hatası).'];
+        }
+
         $allLinks = [];
         $dom = new DOMDocument();
         @$dom->loadHTML($html);
@@ -170,7 +167,7 @@ class SeoAnalyzerService
 
         foreach ($links as $link) {
             $href = $link->getAttribute('href');
-            $absoluteUrl = $this->resolveUrl($href, $baseUrl);
+            $absoluteUrl = $this->resolveUrl($href, $url);
             if (!empty($absoluteUrl)) {
                 $allLinks[] = $absoluteUrl;
             }
@@ -185,8 +182,8 @@ class SeoAnalyzerService
             $mh = curl_multi_init();
             $handles = [];
 
-            foreach ($chunk as $url) {
-                $ch = curl_init($url);
+            foreach ($chunk as $chunkUrl) {
+                $ch = curl_init($chunkUrl);
                 curl_setopt_array($ch, [
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_NOBODY => true,
@@ -198,7 +195,7 @@ class SeoAnalyzerService
                 ]);
 
                 curl_multi_add_handle($mh, $ch);
-                $handles[$url] = $ch;
+                $handles[$chunkUrl] = $ch;
             }
 
             $running = null;
@@ -207,23 +204,22 @@ class SeoAnalyzerService
                 curl_multi_select($mh);
             } while ($running > 0);
 
-            foreach ($handles as $url => $ch) {
+            foreach ($handles as $handleUrl => $ch) {
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 if ($httpCode >= 400) {
-                    $brokenLinks[] = ['url' => $url, 'http_code' => $httpCode];
+                    $brokenLinks[] = ['url' => $handleUrl, 'http_code' => $httpCode];
                 }
                 curl_multi_remove_handle($mh, $ch);
             }
 
             curl_multi_close($mh);
 
-            // Wait for a second before processing the next chunk, but not after the last one.
             if ($index < $chunkCount - 1) {
                 sleep(1);
             }
         }
 
-        return $brokenLinks;
+        return ['success' => true, 'data' => $brokenLinks];
     }
 
     private function resolveUrl(?string $href, string $baseUrl): string

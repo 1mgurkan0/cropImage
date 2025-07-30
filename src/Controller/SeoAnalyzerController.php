@@ -17,6 +17,12 @@ class SeoAnalyzerController extends AbstractController
         return $this->render('seo_analyzer/index.html.twig');
     }
 
+    #[Route('/kirik-link-denetimi', name: 'broken_link_checker', methods: ['GET'])]
+    public function brokenLinkChecker()
+    {
+        return $this->render('seo_analyzer/broken_links.html.twig');
+    }
+
     #[Route('/api/seo/get-sitemaps', name: 'api_get_sitemaps', methods: ['POST'])]
     public function getSitemaps(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
     {
@@ -61,13 +67,23 @@ class SeoAnalyzerController extends AbstractController
     public function analyzeUrl(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
     {
         $url = $request->request->get('url');
-        $checkBrokenLinks = $request->request->getBoolean('check_broken_links');
 
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             return $this->json(['success' => false, 'message' => 'Geçersiz URL.']);
         }
 
-        return $this->json($seoAnalyzer->analyzeUrl($url, $checkBrokenLinks));
+        return $this->json($seoAnalyzer->analyzeUrl($url));
+    }
+
+    #[Route('/api/seo/kirik-linkleri-bul', name: 'api_find_broken_links', methods: ['POST'])]
+    public function findBrokenLinksApi(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
+    {
+        $url = $request->request->get('url');
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->json(['success' => false, 'message' => 'Geçersiz URL.']);
+        }
+
+        return $this->json($seoAnalyzer->getBrokenLinksForUrl($url));
     }
 }
 
