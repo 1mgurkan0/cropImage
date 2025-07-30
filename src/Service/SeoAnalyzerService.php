@@ -17,7 +17,7 @@ class SeoAnalyzerService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_TIMEOUT => 60,
+            CURLOPT_TIMEOUT => 120,
             CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SEOBot/1.0; +http://www.example.com/bot.html)',
         ]);
         $data = curl_exec($ch);
@@ -99,9 +99,8 @@ class SeoAnalyzerService
         }
     }
 
-    public function analyzeUrl(string $url): array
+    public function analyzeUrl(string $url, bool $checkBrokenLinks = false): array
     {
-        sleep(1);
         $fetch = $this->fetchContent($url);
         $html = $fetch['html'];
         $report = [
@@ -147,8 +146,124 @@ class SeoAnalyzerService
             $report['issues'][] = 'H1 etiketi bulunamadı.';
         }
 
+        if ($checkBrokenLinks) {
+            $brokenLinks = $this->findBrokenLinks($html, $url);
+            if (!empty($brokenLinks)) {
+                $report['issues'][] = 'Kırık linkler bulundu:';
+                foreach ($brokenLinks as $link) {
+                    $report['issues'][] = sprintf('- %s (HTTP %d)', $link['url'], $link['http_code']);
+                }
+            }
+        }
+
         $report['status_ok'] = count($report['issues']) === 0;
 
         return ['success' => true, 'data' => $report];
+    }
+
+    private function findBrokenLinks(string $html, string $baseUrl): array
+    {
+        $allLinks = [];
+        $dom = new DOMDocument();
+        @$dom->loadHTML($html);
+        $links = $dom->getElementsByTagName('a');
+
+        foreach ($links as $link) {
+            $href = $link->getAttribute('href');
+            $absoluteUrl = $this->resolveUrl($href, $baseUrl);
+            if (!empty($absoluteUrl)) {
+                $allLinks[] = $absoluteUrl;
+            }
+        }
+
+        $uniqueLinks = array_unique($allLinks);
+        $brokenLinks = [];
+        $linkChunks = array_chunk($uniqueLinks, 10); // Process in chunks of 10
+
+        $chunkCount = count($linkChunks);
+        foreach ($linkChunks as $index => $chunk) {
+            $mh = curl_multi_init();
+            $handles = [];
+
+            foreach ($chunk as $url) {
+                $ch = curl_init($url);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_NOBODY => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SEOBot/1.0; +http://www.example.com/bot.html)',
+                    CURLOPT_CONNECTTIMEOUT => 5,
+                ]);
+
+                curl_multi_add_handle($mh, $ch);
+                $handles[$url] = $ch;
+            }
+
+            $running = null;
+            do {
+                curl_multi_exec($mh, $running);
+                curl_multi_select($mh);
+            } while ($running > 0);
+
+            foreach ($handles as $url => $ch) {
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($httpCode >= 400) {
+                    $brokenLinks[] = ['url' => $url, 'http_code' => $httpCode];
+                }
+                curl_multi_remove_handle($mh, $ch);
+            }
+
+            curl_multi_close($mh);
+
+            // Wait for a second before processing the next chunk, but not after the last one.
+            if ($index < $chunkCount - 1) {
+                sleep(1);
+            }
+        }
+
+        return $brokenLinks;
+    }
+
+    private function resolveUrl(?string $href, string $baseUrl): string
+    {
+        if (empty($href)) {
+            return '';
+        }
+
+        $href = trim($href);
+
+        if (filter_var($href, FILTER_VALIDATE_URL)) {
+            return $href;
+        }
+
+        if (preg_match('/^(#|javascript:|mailto:|tel:|sms:)/i', $href)) {
+            return '';
+        }
+
+        $base = parse_url($baseUrl);
+        if (empty($base['scheme']) || empty($base['host'])) {
+            return '';
+        }
+
+        $scheme = $base['scheme'];
+        $host = $base['host'];
+
+        if (str_starts_with($href, '//')) {
+            return $scheme . ':' . $href;
+        }
+
+        if (str_starts_with($href, '/')) {
+            return $scheme . '://' . $host . $href;
+        }
+
+        $path = $base['path'] ?? '/';
+        $path = dirname($path);
+        if ($path === '.' || $path === '/') {
+            $path = '';
+        }
+
+        return $scheme . '://' . $host . $path . '/' . $href;
     }
 }

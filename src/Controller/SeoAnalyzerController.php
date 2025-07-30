@@ -61,11 +61,13 @@ class SeoAnalyzerController extends AbstractController
     public function analyzeUrl(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
     {
         $url = $request->request->get('url');
+        $checkBrokenLinks = $request->request->getBoolean('check_broken_links');
+
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             return $this->json(['success' => false, 'message' => 'Geçersiz URL.']);
         }
 
-        return $this->json($seoAnalyzer->analyzeUrl($url));
+        return $this->json($seoAnalyzer->analyzeUrl($url, $checkBrokenLinks));
     }
 }
 
