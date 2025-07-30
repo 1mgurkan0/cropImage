@@ -211,11 +211,9 @@
             <div id="sitemap-selection-container" class="hidden ms-3 me-3 ">
                 <h4>Analiz Edilecek Sitemap Kategorisini Seçin</h4>
                 <div class="row">
-                    <div id="sitemap-links">
-                        <input type="checkbox" class="ms-3" >
-                        <div class="col py-3  px-3" ></div>
-                    </div>
+                    <div class="col py-3 px-3" id="sitemap-links"></div>
                 </div>
+                <button id="analyze-selected-btn" class="submit-btn hidden mt-3">Seçilenleri Analiz Et</button>
             </div>
 
             <div id="progress-container" class="hidden" >
@@ -305,8 +303,9 @@
             const progressText = $('#progress-text');
             const resultsContainer = $('#results-container');
             const resultsTbody = $('#results-tbody');
+            const analyzeSelectedBtn = $('#analyze-selected-btn');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
-            const CONCURRENT_REQUESTS = 3; // Aynı anda çalışacak istek sayısı
+            const CONCURRENT_REQUESTS = 5; // Aynı anda çalışacak istek sayısı
             let activeRequests = 0;
             let queue = [];
 
@@ -365,7 +364,6 @@
                     .done(function(response) {
                         if (response.success) {
                             populateTable(response.urls);
-                            processQueue();
                         } else {
                             alert('Hata: ' + response.message);
                             resetUI();
@@ -376,6 +374,62 @@
                         resetUI();
                     });
             });
+
+            analyzeSelectedBtn.on('click', function() {
+                const selectedSitemaps = sitemapLinks.find('input[type="checkbox"]:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                if (selectedSitemaps.length === 0) {
+                    alert('Lütfen en az bir sitemap kategorisi seçin.');
+                    return;
+                }
+
+                resetForAnalysis();
+                sitemapSelectionContainer.addClass('hidden');
+                progressContainer.removeClass('hidden');
+                resultsContainer.removeClass('hidden');
+
+                fetchAllUrls(selectedSitemaps);
+            });
+
+            function resetForAnalysis() {
+                resultsTbody.empty();
+                processedUrls = 0;
+                errorCount = 0;
+                totalUrls = 0;
+                queue = [];
+                activeRequests = 0;
+                $('#progress-title').text('Analiz İlerlemesi');
+                updateProgress();
+            }
+
+            function fetchAllUrls(sitemapUrls) {
+                const promises = sitemapUrls.map(url => {
+                    return $.post('{{ path("api_get_urls_from_sitemap") }}', { sitemap_url: url })
+                        .then(function(response) {
+                            if (response.success && response.urls) {
+                                return response.urls;
+                            }
+                            return []; // Hata durumunda boş dizi döndür
+                        })
+                        .catch(function() {
+                            return []; // AJAX hatasında boş dizi döndür
+                        });
+                });
+
+                Promise.all(promises).then(urlArrays => {
+                    const allUrls = [].concat.apply([], urlArrays);
+                    const uniqueUrls = [...new Set(allUrls)];
+
+                    if (uniqueUrls.length > 0) {
+                        populateTable(uniqueUrls);
+                    } else {
+                        alert('Seçilen sitemap kategorilerinden hiç URL alınamadı.');
+                        resetUI();
+                    }
+                });
+            }
 
             function resetUI() {
                 submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Sitemap Kategorilerini Getir');
@@ -391,9 +445,21 @@
                 sitemapLinks.empty();
                 sitemaps.forEach(url => {
                     const fileName = url.split('/').pop();
-                    const link = `<a href="#" data-url="${url}" class="outline" style="margin-right: 10px; margin-bottom: 10px;">${fileName}</a>`;
-                    sitemapLinks.append(link);
+                    const checkbox = `
+                        <div class="form-check submit-btn mb-24">
+                            <input class="form-check-input ms-3" type="checkbox" value="${url}" id="sitemap-${fileName}">
+                            <label class="form-check-label "
+                                style="
+                                    font-weight: 600;
+                                    transition: background-color 0.3s ease, transform 0.2s ease;
+                                    color: #ffffff;"
+                                for="sitemap-${fileName}">
+                                ${fileName}
+                            </label>
+                        </div>`;
+                    sitemapLinks.append(checkbox);
                 });
+                analyzeSelectedBtn.removeClass('hidden');
                 sitemapSelectionContainer.removeClass('hidden');
             }
 
