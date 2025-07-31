@@ -315,6 +315,7 @@
             const analyzeSelectedBtn = $('#analyze-selected-btn');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
             const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
+            const DELAY_BETWEEN_REQUESTS = 1000; // İstekler arası bekleme süresi (ms)
             let activeRequests = 0;
             let queue = [];
 
@@ -337,7 +338,6 @@
                                 displaySitemapSelection(response.data.sitemaps);
                             } else if (response.data.type === 'urls') {
                                 populateTable(response.data.urls);
-                                processQueue();
                             }
                         } else {
                             alert('Hata: ' + response.message);
@@ -506,19 +506,17 @@
             }
 
             function processQueue() {
-                if (queue.length === 0 && activeRequests === 0) {
-                    submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                    $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
+                if (activeRequests >= CONCURRENT_REQUESTS || queue.length === 0) {
                     return;
                 }
 
-                while (activeRequests < CONCURRENT_REQUESTS && queue.length > 0) {
-                    const url = queue.shift();
-                    const nextRow = resultsTbody.find(`tr[data-url="${url}"]`);
-                    if (nextRow.length) {
-                        // Her istek arasına 250ms gecikme ekliyoruz.
-                        setTimeout(() => analyzeUrl(nextRow, url), 250);
-                    }
+                const url = queue.shift();
+                const nextRow = resultsTbody.find(`tr[data-url="${url}"]`);
+                if (nextRow.length) {
+                    analyzeUrl(nextRow, url);
+                } else {
+                    // Should not happen, but if it does, continue
+                    processQueue();
                 }
             }
 
@@ -543,7 +541,13 @@
                         processedUrls++;
                         activeRequests--;
                         updateProgress();
-                        processQueue();
+
+                        if (queue.length > 0) {
+                            setTimeout(processQueue, DELAY_BETWEEN_REQUESTS);
+                        } else if (activeRequests === 0) {
+                            $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
+                            submitBtn.removeAttr('aria-busy').prop('disabled', false);
+                        }
                     });
             }
 
