@@ -314,7 +314,7 @@
             const resultsTbody = $('#results-tbody');
             const analyzeSelectedBtn = $('#analyze-selected-btn');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
-            const CONCURRENT_REQUESTS = 5; // Aynı anda çalışacak istek sayısı
+            const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
             let activeRequests = 0;
             let queue = [];
 
