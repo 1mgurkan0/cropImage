@@ -217,6 +217,8 @@
                 <p id="progress-text" class="text-black">0/0 URL analiz edildi.</p>
             </div>
 
+            <button id="download-csv-btn" class="submit-btn hidden mt-3">Sonuçları CSV Olarak İndir</button>
+
             <div id="results-container" class="hidden " >
                 <hr>
                 <h3>Analiz Sonuçları</h3>
@@ -235,6 +237,7 @@
                         <tbody id="results-tbody"></tbody>
                     </table>
                 </div>
+
             </div>
         </div>
     </main>
@@ -313,15 +316,18 @@
             const resultsContainer = $('#results-container');
             const resultsTbody = $('#results-tbody');
             const analyzeSelectedBtn = $('#analyze-selected-btn');
+            const downloadCsvBtn = $('#download-csv-btn');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
             const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
-            const DELAY_BETWEEN_REQUESTS = 1000; // İstekler arası bekleme süresi (ms)
+            const DELAY_BETWEEN_REQUESTS = 250;
             let activeRequests = 0;
             let queue = [];
+            let currentDomain = '';
 
             domainForm.on('submit', function(e) {
                 e.preventDefault();
                 const domainUrl = $('#domain_url').val();
+                currentDomain = domainUrl;
 
                 if (!domainUrl) {
                     alert('Lütfen geçerli bir domain URL si girin.');
@@ -515,7 +521,6 @@
                 if (nextRow.length) {
                     analyzeUrl(nextRow, url);
                 } else {
-                    // Should not happen, but if it does, continue
                     processQueue();
                 }
             }
@@ -547,8 +552,52 @@
                         } else if (activeRequests === 0) {
                             $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
                             submitBtn.removeAttr('aria-busy').prop('disabled', false);
+                            downloadCsvBtn.removeClass('hidden');
                         }
                     });
+            }
+
+            downloadCsvBtn.on('click', function() {
+                generateAndDownloadCsv();
+            });
+
+            function generateAndDownloadCsv() {
+                const headers = ["Durum", "URL", "Title", "Description", "H1", "Bulunan Hatalar"];
+                let csvContent = headers.join(",") + "\r\n";
+
+                resultsTbody.find('tr').each(function() {
+                    const row = $(this);
+                    const status = row.find('.status .status-icon').text();
+                    const url = row.find('.url a').attr('href');
+                    const titleText = `"${row.find('.title').text().replace(/"/g, '""')}"`;
+                    const descriptionText = `"${row.find('.description').text().replace(/"/g, '""')}"`;
+                    const h1Text = `"${row.find('.h1').text().replace(/"/g, '""')}"`;
+                    const issues = row.data('issues') || [];
+                    const issuesText = `"${issues.join(', ').replace(/"/g, '""')}"`;
+
+                    const rowData = [
+                        status,
+                        url,
+                        titleText,
+                        descriptionText,
+                        h1Text,
+                        issuesText
+                    ];
+                    csvContent += rowData.join(",") + "\r\n";
+                });
+
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                const safeFilename = currentDomain.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '').replace(/[^a-z0-9_\\-\\.]/gi, '_');
+                link.setAttribute("download", safeFilename + "_seo_analysis.csv");
+                document.body.appendChild(link);
+
+                link.click();
+
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
             }
 
             function updateRow(row, data) {
@@ -557,6 +606,7 @@
                 row.find('.title').text(data.title || '');
                 row.find('.description').text(data.description || '');
                 row.find('.h1').text(data.h1 || '');
+                row.data('issues', data.issues || []);
 
                 const statusIcon = row.find('.status .status-icon');
                 if (data.status_ok) {

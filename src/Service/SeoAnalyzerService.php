@@ -124,10 +124,10 @@ class SeoAnalyzerService
             $report['issues'][] = 'Title 60 karakterden uzun (' . mb_strlen($meta['title']) . ' karakter).';
         }
         if (mb_strlen($meta['title']) < 50) {
-            $report['issues'][] = 'Title 50 karakterden kısa (' . mb_strlen($meta['title']) . ' karakter).';
+            $report['issues'][] = 'Title 50 karakterden kisa (' . mb_strlen($meta['title']) . ' karakter).';
         }
         if (empty($meta['title'])) {
-            $report['issues'][] = 'Title etiketi boş veya bulunamadı.';
+            $report['issues'][] = 'Title etiketi bos veya bulunamadi.';
         }
 
         if (empty($meta['description'])) {
@@ -135,7 +135,7 @@ class SeoAnalyzerService
         } else {
             $descLen = mb_strlen($meta['description']);
             if ($descLen < 70) {
-                $report['issues'][] = 'Description 70 karakterden kısa (' . $descLen . ' karakter).';
+                $report['issues'][] = 'Description 70 karakterden kisa (' . $descLen . ' karakter).';
             }
             if ($descLen > 160) {
                 $report['issues'][] = 'Description 160 karakterden uzun (' . $descLen . ' karakter).';
