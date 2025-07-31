@@ -506,17 +506,19 @@
             }
 
             function processQueue() {
+                if (queue.length === 0 && activeRequests === 0) {
+                    submitBtn.removeAttr('aria-busy').prop('disabled', false);
+                    $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
+                    return;
+                }
+
                 while (activeRequests < CONCURRENT_REQUESTS && queue.length > 0) {
                     const url = queue.shift();
                     const nextRow = resultsTbody.find(`tr[data-url="${url}"]`);
                     if (nextRow.length) {
-                        analyzeUrl(nextRow, url);
+                        // Her istek arasına 250ms gecikme ekliyoruz.
+                        setTimeout(() => analyzeUrl(nextRow, url), 250);
                     }
-                }
-
-                if (processedUrls === totalUrls) {
-                    submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                    $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi!)`);
                 }
             }
 
