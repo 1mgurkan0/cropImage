@@ -9,6 +9,7 @@
 /vendor/
 .env
 /node_modules
+/config/google/credential.json
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###

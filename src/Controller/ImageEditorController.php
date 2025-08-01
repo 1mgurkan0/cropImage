@@ -413,4 +413,14 @@ final class ImageEditorController extends AbstractController
 
         return $response;
     }
+
+    #[Route('/karakter-sayaci', name: 'app_character_counter', methods: ['GET', 'POST'])]
+    public function counter(Request $request): Response
+    {
+        if ($request->isMethod('GET')) {
+            return $this->render('image/counter.html.twig');
+        }
+
+        return $this->render('image/counter.html.twig');
+    }
 }

@@ -9,6 +9,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
+use Google\Service\Sheets;
+use Google\Client as GoogleClient;
+
 class SeoAnalyzerController extends AbstractController
 {
     #[Route('/seo-analizi', name: 'seo_analyzer', methods: ['GET'])]
@@ -84,6 +87,60 @@ class SeoAnalyzerController extends AbstractController
         }
 
         return $this->json($seoAnalyzer->getBrokenLinksForUrl($url));
+    }
+
+    #[Route('/api/seo/export-to-sheets', name: 'api_export_to_sheets', methods: ['POST'])]
+    public function exportToSheets(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $rows = $data['rows'] ?? [];
+        $domain = $data['domain'] ?? 'seo_analysis';
+
+        if (empty($rows)) {
+            return $this->json(['success' => false, 'message' => 'Aktarılacak veri bulunamadı.'], 400);
+        }
+
+        try {
+            $client = new GoogleClient();
+            $client->setApplicationName('Image Editor Seo Analyzer');
+            $client->setScopes([Sheets::SPREADSHEETS]);
+            $credentialsPath = $this->getParameter('kernel.project_dir') . '/config/google/credential.json';
+            $client->setAuthConfig($credentialsPath);
+
+            $sheetsService = new Sheets($client);
+            $spreadsheet = new \Google_Service_Sheets_Spreadsheet([
+                'properties' => [
+                    'title' => $domain . ' SEO Analizi ' . date('Y-m-d H:i:s')
+                ]
+            ]);
+
+            $spreadsheet = $sheetsService->spreadsheets->create($spreadsheet);
+            $spreadsheetId = $spreadsheet->getSpreadsheetId();
+
+            $body = new \Google_Service_Sheets_ValueRange([
+                'values' => $rows
+            ]);
+
+            $params = ['valueInputOption' => 'USER_ENTERED'];
+            $sheetsService->spreadsheets_values->update($spreadsheetId, 'A1', $body, $params);
+
+            // E-tabloyu herkese açık yap
+            $permission = new \Google_Service_Sheets_Permission([
+                'type' => 'anyone',
+                'role' => 'reader'
+            ]);
+            // Bu API Google Drive API gerektirir, şimdilik devre dışı bırakıldı.
+            // $driveService = new \Google_Service_Drive($client);
+            // $driveService->permissions->create($spreadsheetId, $permission);
+
+            return $this->json([
+                'success' => true,
+                'spreadsheet_url' => $spreadsheet->getSpreadsheetUrl()
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'message' => 'Google Sheets API hatası: ' . $e->getMessage()], 500);
+        }
     }
 }
 
