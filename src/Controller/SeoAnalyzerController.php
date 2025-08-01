@@ -94,7 +94,6 @@ class SeoAnalyzerController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $rows = $data['rows'] ?? [];
-        $domain = $data['domain'] ?? 'seo_analysis';
 
         if (empty($rows)) {
             return $this->json(['success' => false, 'message' => 'Aktarılacak veri bulunamadı.'], 400);
@@ -108,34 +107,21 @@ class SeoAnalyzerController extends AbstractController
             $client->setAuthConfig($credentialsPath);
 
             $sheetsService = new Sheets($client);
-            $spreadsheet = new \Google_Service_Sheets_Spreadsheet([
-                'properties' => [
-                    'title' => $domain . ' SEO Analizi ' . date('Y-m-d H:i:s')
-                ]
-            ]);
+            $spreadsheetId = '128JJFW3EKg-DQ9-DRT8xWnTDitY7IpTDmX4GHpU4hrY';
 
-            $spreadsheet = $sheetsService->spreadsheets->create($spreadsheet);
-            $spreadsheetId = $spreadsheet->getSpreadsheetId();
+            $clearRange = 'Sayfa1';
+            $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
+            $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
 
             $body = new \Google_Service_Sheets_ValueRange([
                 'values' => $rows
             ]);
-
             $params = ['valueInputOption' => 'USER_ENTERED'];
             $sheetsService->spreadsheets_values->update($spreadsheetId, 'A1', $body, $params);
 
-            // E-tabloyu herkese açık yap
-            $permission = new \Google_Service_Sheets_Permission([
-                'type' => 'anyone',
-                'role' => 'reader'
-            ]);
-            // Bu API Google Drive API gerektirir, şimdilik devre dışı bırakıldı.
-            // $driveService = new \Google_Service_Drive($client);
-            // $driveService->permissions->create($spreadsheetId, $permission);
-
             return $this->json([
                 'success' => true,
-                'spreadsheet_url' => $spreadsheet->getSpreadsheetUrl()
+                'spreadsheet_url' => 'https://docs.google.com/spreadsheets/d/' . $spreadsheetId
             ]);
 
         } catch (\Exception $e) {
