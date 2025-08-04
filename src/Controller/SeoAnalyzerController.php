@@ -145,7 +145,7 @@ class SeoAnalyzerController extends AbstractController
     }
 
     #[Route('/api/seo/export-to-sheets', name: 'api_export_to_sheets', methods: ['POST'])]
-    public function exportToSheets(Request $request): JsonResponse
+    public function exportToSheets(Request $request, SeoAnalyzerService $seoAnalyzerService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $rows = $data['rows'] ?? [];
@@ -156,33 +156,12 @@ class SeoAnalyzerController extends AbstractController
             return $this->json(['success' => false, 'message' => 'Eksik parametre: Aktarılacak veri, Spreadsheet ID ve Sekme Adı gereklidir.'], 400);
         }
 
-        try {
-            $client = new GoogleClient();
-            $client->setApplicationName('Image Editor Seo Analyzer');
-            $client->setScopes([Sheets::SPREADSHEETS]);
-            $credentialsPath = $this->getParameter('kernel.project_dir') . '/config/google/credential.json';
-            $client->setAuthConfig($credentialsPath);
+        $result = $seoAnalyzerService->exportToGoogleSheets($rows, $spreadsheetId, $tabName);
 
-            $sheetsService = new Sheets($client);
-
-            $clearRange = $tabName;
-            $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
-            $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
-
-            $updateRange = $tabName . '!A1';
-            $body = new \Google_Service_Sheets_ValueRange([
-                'values' => $rows
-            ]);
-            $params = ['valueInputOption' => 'USER_ENTERED'];
-            $sheetsService->spreadsheets_values->update($spreadsheetId, $updateRange, $body, $params);
-
-            return $this->json([
-                'success' => true,
-                'spreadsheet_url' => 'https://docs.google.com/spreadsheets/d/' . $spreadsheetId
-            ]);
-
-        } catch (\Exception $e) {
-            return $this->json(['success' => false, 'message' => 'Google Sheets API hatası: ' . $e->getMessage()], 500);
+        if ($result['success']) {
+            return $this->json(['success' => true, 'spreadsheet_url' => $result['spreadsheet_url']]);
+        } else {
+            return $this->json(['success' => false, 'message' => $result['message']], 500);
         }
     }
 }

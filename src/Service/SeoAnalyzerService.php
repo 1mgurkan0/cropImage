@@ -293,8 +293,60 @@ class SeoAnalyzerService
 
             return ['success' => true, 'sheets' => $sheetNames];
 
+        } catch (\Google\Service\Exception $e) {
+            $message = 'Google Sheets API hatası: ' . $e->getMessage();
+            if (str_contains($e->getMessage(), 'Requested entity was not found')) {
+                $message = 'Geçersiz E-Tablo ID veya E-Tablo bulunamadı.';
+            } elseif (str_contains($e->getMessage(), 'The caller does not have permission')) {
+                $message = 'E-Tabloya erişim izniniz yok. Lütfen doğru izinlere sahip olduğunuzdan emin olun.';
+            }
+            return ['success' => false, 'message' => $message];
         } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Google Sheets API hatası: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Beklenmeyen bir hata oluştu: ' . $e->getMessage()];
+        }
+    }
+
+    public function exportToGoogleSheets(array $rows, string $spreadsheetId, string $tabName): array
+    {
+        try {
+            $client = new GoogleClient();
+            $client->setApplicationName('Image Editor Seo Analyzer');
+            $client->setScopes([Sheets::SPREADSHEETS]);
+            $credentialsPath = $this->projectDir . '/config/google/credential.json';
+            $client->setAuthConfig($credentialsPath);
+
+            $sheetsService = new Sheets($client);
+
+            // Clear existing data in the specified range
+            $clearRange = $tabName;
+            $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
+            $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
+
+            // Append new data
+            $updateRange = $tabName . '!A1';
+            $body = new \Google_Service_Sheets_ValueRange([
+                'values' => $rows
+            ]);
+            $params = ['valueInputOption' => 'USER_ENTERED'];
+            $sheetsService->spreadsheets_values->update($spreadsheetId, $updateRange, $body, $params);
+
+            return [
+                'success' => true,
+                'spreadsheet_url' => 'https://docs.google.com/spreadsheets/d/' . $spreadsheetId
+            ];
+
+        } catch (\Google\Service\Exception $e) {
+            $message = 'Google Sheets API hatası: ' . $e->getMessage();
+            if (str_contains($e->getMessage(), 'Requested entity was not found')) {
+                $message = 'Geçersiz E-Tablo ID veya E-Tablo bulunamadı.';
+            } elseif (str_contains($e->getMessage(), 'The caller does not have permission')) {
+                $message = 'E-Tabloya yazma izniniz yok. Lütfen doğru izinlere sahip olduğunuzdan emin olun.';
+            } elseif (str_contains($e->getMessage(), 'Unable to parse range') || str_contains($e->getMessage(), 'Invalid Sheet name')) {
+                $message = 'Geçersiz Sekme Adı. Lütfen E-Tablodaki mevcut bir sekme adını girin.';
+            }
+            return ['success' => false, 'message' => $message];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Beklenmeyen bir hata oluştu: ' . $e->getMessage()];
         }
     }
 }

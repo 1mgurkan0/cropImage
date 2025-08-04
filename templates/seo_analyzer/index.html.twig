@@ -208,7 +208,7 @@
                 <div class="row">
                     <div class="col py-3 px-3" id="sitemap-links"></div>
                 </div>
-                <button id="analyze-selected-btn" class="submit-btn hidden mt-3">Seçilenleri Analiz Et</button>
+                <button id="analyze-selected-btn" class="col-12 submit-btn hidden mt-3">Seçilenleri Analiz Et</button>
             </div>
 
             <div id="progress-container" class="hidden">
@@ -375,6 +375,70 @@
             const spreadsheetIdInput = $('#spreadsheet_id');
             const tabsNameSelect = $('#tabs_name');
             const exportSheetsBtn = $('#export-sheets-btn');
+
+            exportSheetsBtn.on('click', function() {
+                const spreadsheetId = $('#saved_sheets_select').val();
+                const tabName = $('#tabs_name').val();
+
+                if (!spreadsheetId || !tabName) {
+                    alert('Lütfen bir E-Tablo ve Sekme Adı seçin.');
+                    return;
+                }
+
+                const rows = [];
+                // Başlıkları al
+                const headers = [];
+                $('#results-container thead th').each(function() {
+                    headers.push($(this).text().trim());
+                });
+                rows.push(headers);
+
+                // Verileri al
+                $('#results-tbody tr').each(function() {
+                    const rowData = [];
+                    $(this).find('td').each(function(index) {
+                        if (index === 0) { // Durum sütunu
+                            rowData.push($(this).find('.status-icon').text().trim());
+                        } else if (index === 1) { // URL sütunu
+                            rowData.push($(this).find('a').attr('href') || $(this).text().trim());
+                        } else if (index === 5) { // Sorunlar sütunu
+                            const issues = [];
+                            $(this).find('li').each(function() {
+                                issues.push($(this).text().trim());
+                            });
+                            rowData.push(issues.join('; ')); // Sorunları noktalı virgülle birleştir
+                        } else {
+                            rowData.push($(this).text().trim());
+                        }
+                    });
+                    rows.push(rowData);
+                });
+
+                if (rows.length <= 1) { // Sadece başlıklar varsa
+                    alert('Dışa aktarılacak analiz sonucu bulunamadı.');
+                    return;
+                }
+
+                exportSheetsBtn.attr('aria-busy', 'true').prop('disabled', true).text('Aktarılıyor...');
+
+                $.ajax({
+                    url: '{{ path("api_export_to_sheets") }}',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ rows: rows, spreadsheetId: spreadsheetId, tabName: tabName }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Analiz sonuçları başarıyla Google E-Tablolar\'a aktarıldı!\nE-Tablo URL: ' + response.spreadsheet_url);
+                            window.open(response.spreadsheet_url, '_blank');
+                        } else {
+                            alert('Hata: ' + response.message);
+                        }
+                    },
+                    complete: function() {
+                        exportSheetsBtn.removeAttr('aria-busy').prop('disabled', false).text('Google E-Tablolar\'a Aktar');
+                    }
+                });
+            });
 
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
             const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
