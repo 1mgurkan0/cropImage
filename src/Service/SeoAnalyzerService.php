@@ -6,9 +6,18 @@ namespace App\Service;
 use DOMDocument;
 use DOMXPath;
 use SimpleXMLElement;
+use Google\Service\Sheets;
+use Google\Client as GoogleClient;
 
 class SeoAnalyzerService
 {
+    private string $projectDir;
+
+    public function __construct(string $projectDir)
+    {
+        $this->projectDir = $projectDir;
+    }
+
     public function fetchContent(string $url): array
     {
         $ch = curl_init();
@@ -261,5 +270,31 @@ class SeoAnalyzerService
         }
 
         return $scheme . '://' . $host . $path . '/' . $href;
+    }
+
+    public function getGoogleSheetNames(string $spreadsheetId): array
+    {
+        try {
+            $client = new GoogleClient();
+            $client->setApplicationName('Image Editor Seo Analyzer');
+            $client->setScopes([Sheets::SPREADSHEETS_READONLY]);
+            $credentialsPath = $this->projectDir . '/config/google/credential.json';
+            $client->setAuthConfig($credentialsPath);
+
+            $sheetsService = new Sheets($client);
+
+            $spreadsheet = $sheetsService->spreadsheets->get($spreadsheetId);
+            $sheets = $spreadsheet->getSheets();
+
+            $sheetNames = [];
+            foreach ($sheets as $sheet) {
+                $sheetNames[] = $sheet->getProperties()->getTitle();
+            }
+
+            return ['success' => true, 'sheets' => $sheetNames];
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Google Sheets API hatası: ' . $e->getMessage()];
+        }
     }
 }

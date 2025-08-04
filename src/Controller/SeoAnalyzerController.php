@@ -9,8 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
-use Google\Service\Sheets;
-use Google\Client as GoogleClient;
+
 
 class SeoAnalyzerController extends AbstractController
 {
@@ -78,7 +77,7 @@ class SeoAnalyzerController extends AbstractController
         return $this->json($seoAnalyzer->analyzeUrl($url));
     }
 
-    #[Route('/api/seo/kirik-linkleri-bul', name: 'api_find_broken_links', methods: ['POST'])]
+    #[Route('/kirik-link-denetimi', name: 'api_find_broken_links', methods: ['POST'])]
     public function findBrokenLinksApi(Request $request, SeoAnalyzerService $seoAnalyzer): JsonResponse
     {
         $url = $request->request->get('url');
@@ -88,15 +87,73 @@ class SeoAnalyzerController extends AbstractController
 
         return $this->json($seoAnalyzer->getBrokenLinksForUrl($url));
     }
+    private const SHEETS_CONFIG_PATH = '/config/google/sheets_config.json';
+
+    #[Route('/api/seo/get-saved-sheets', name: 'api_get_saved_sheets', methods: ['GET'])]
+    public function getSavedSheets(): JsonResponse
+    {
+        $configFile = $this->getParameter('kernel.project_dir') . self::SHEETS_CONFIG_PATH;
+        if (!file_exists($configFile)) {
+            return $this->json(['success' => true, 'sheets' => []]);
+        }
+
+        $config = json_decode(file_get_contents($configFile), true);
+        return $this->json(['success' => true, 'sheets' => $config ?? []]);
+    }
+
+    #[Route('/api/seo/save-sheet-config', name: 'api_save_sheet_config', methods: ['POST'])]
+    public function saveSheet(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $name = $data['name'] ?? null;
+        $id = $data['id'] ?? null;
+
+        if (empty($name) || empty($id)) {
+            return $this->json(['success' => false, 'message' => 'E-Tablo Adı ve IDsi gereklidir.'], 400);
+        }
+
+        $configFile = $this->getParameter('kernel.project_dir') . self::SHEETS_CONFIG_PATH;
+        $config = [];
+        if (file_exists($configFile)) {
+            $config = json_decode(file_get_contents($configFile), true) ?? [];
+        }
+
+        $config[$name] = $id;
+
+        file_put_contents($configFile, json_encode($config, JSON_PRETTY_PRINT));
+
+        return $this->json(['success' => true, 'message' => 'E-Tablo başarıyla kaydedildi.']);
+    }
+
+    #[Route('/api/seo/get-sheet-names', name: 'api_get_sheet_names', methods: ['POST'])]
+    public function getSheetNames(Request $request, SeoAnalyzerService $seoAnalyzerService): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $spreadsheetId = $data['spreadsheetId'] ?? null;
+
+        if (empty($spreadsheetId)) {
+            return $this->json(['success' => false, 'message' => 'Spreadsheet ID bulunamadı.'], 400);
+        }
+
+        $result = $seoAnalyzerService->getGoogleSheetNames($spreadsheetId);
+
+        if ($result['success']) {
+            return $this->json(['success' => true, 'sheets' => $result['sheets']]);
+        } else {
+            return $this->json(['success' => false, 'message' => $result['message']], 500);
+        }
+    }
 
     #[Route('/api/seo/export-to-sheets', name: 'api_export_to_sheets', methods: ['POST'])]
     public function exportToSheets(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $rows = $data['rows'] ?? [];
+        $spreadsheetId = $data['spreadsheetId'] ?? null;
+        $tabName = $data['tabName'] ?? null;
 
-        if (empty($rows)) {
-            return $this->json(['success' => false, 'message' => 'Aktarılacak veri bulunamadı.'], 400);
+        if (empty($rows) || empty($spreadsheetId) || empty($tabName)) {
+            return $this->json(['success' => false, 'message' => 'Eksik parametre: Aktarılacak veri, Spreadsheet ID ve Sekme Adı gereklidir.'], 400);
         }
 
         try {
@@ -107,17 +164,17 @@ class SeoAnalyzerController extends AbstractController
             $client->setAuthConfig($credentialsPath);
 
             $sheetsService = new Sheets($client);
-            $spreadsheetId = '128JJFW3EKg-DQ9-DRT8xWnTDitY7IpTDmX4GHpU4hrY';
 
-            $clearRange = 'Sayfa1';
+            $clearRange = $tabName;
             $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
             $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
 
+            $updateRange = $tabName . '!A1';
             $body = new \Google_Service_Sheets_ValueRange([
                 'values' => $rows
             ]);
             $params = ['valueInputOption' => 'USER_ENTERED'];
-            $sheetsService->spreadsheets_values->update($spreadsheetId, 'A1', $body, $params);
+            $sheetsService->spreadsheets_values->update($spreadsheetId, $updateRange, $body, $params);
 
             return $this->json([
                 'success' => true,

@@ -74,10 +74,10 @@
             background-color: rgba(239, 93, 93, 0.1);
         }
         .status-ok {
-            color: #44bd85; /* Green checkmark */
+            color: #44bd85;
         }
         .status-error {
-            color: #ef5d5d; /* Red cross */
+            color: #ef5d5d;
         }
         h1, h2, h3 {
             color: var(--text-color);
@@ -89,7 +89,7 @@
             color: var(--primary-color);
         }
         a:hover {
-            color: #3871c2; /* Darker primary color on hover */
+            color: #3871c2;
         }
 
         .converter-card {
@@ -211,13 +211,52 @@
                 <button id="analyze-selected-btn" class="submit-btn hidden mt-3">Seçilenleri Analiz Et</button>
             </div>
 
-            <div id="progress-container" class="hidden" >
+            <div id="progress-container" class="hidden">
                 <h3 id="progress-title">Analiz İlerlemesi</h3>
                 <progress id="progress-bar" value="0" max="100"></progress>
                 <p id="progress-text" class="text-black">0/0 URL analiz edildi.</p>
             </div>
 
-            <button id="export-sheets-btn" class="submit-btn hidden mt-3">Google E-Tablolar'a Aktar</button>
+            <div id="sheet-management-container" class="hidden mt-4 card p-4 shadow-lg converter-card">
+                <hgroup>
+                    <h4>Yeni Bir E-Tablo Kaydet</h4>
+                </hgroup>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="sheet_name_input">Kısa İsim (örn: Orgu Analiz)</label>
+                        <input type="text" id="sheet_name_input" name="sheet_name" placeholder="E-Tabloya bir isim verin" style="background-color: var(--card-bg-color); color:#000000;">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="sheet_id_input">Google Sheet ID</label>
+                        <input type="text" id="sheet_id_input" name="sheet_id" placeholder="Kaydedilecek E-Tablonun ID'si" style="background-color: var(--card-bg-color); color:#000000;">
+                    </div>
+
+                    <button id="save_sheet_btn" class="col-12 submit-btn">Kaydet</button>
+
+                </div>
+            </div>
+
+            <form id="export-form" class="hidden mt-4 card p-4 shadow-lg converter-card">
+                <hgroup>
+                    <h4>Analiz Sonuçlarını Dışa Aktar</h4>
+                </hgroup>
+                <div class="row">
+                    <div class="col-6">
+                        <label for="saved_sheets_select">Kayıtlı E-Tablolardan Seçin</label>
+                        <select id="saved_sheets_select" class="form-select" style="background-color: var(--card-bg-color); color:#000000;">
+                            <option value="">Kaydedilmiş E-Tablo Seçin</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="tabs_name">Sekme Adı</label>
+                        <select name="tabs_name" id="tabs_name" disabled class="form-select" style="background-color: var(--card-bg-color); color:#000000;">
+                            <option>Önce Tablo Seçin</option>
+                        </select>
+                    </div>
+                    <button type="button" id="export-sheets-btn" class="col-12 submit-btn">Google E-Tablolar'a Aktar</button>
+
+                </div>
+            </form>
 
             <div id="results-container" class="hidden " >
                 <hr>
@@ -237,8 +276,8 @@
                         <tbody id="results-tbody"></tbody>
                     </table>
                 </div>
-
             </div>
+
         </div>
     </main>
 
@@ -331,7 +370,12 @@
             const resultsContainer = $('#results-container');
             const resultsTbody = $('#results-tbody');
             const analyzeSelectedBtn = $('#analyze-selected-btn');
-            const downloadCsvBtn = $('#download-csv-btn');
+
+            const exportForm = $('#export-form');
+            const spreadsheetIdInput = $('#spreadsheet_id');
+            const tabsNameSelect = $('#tabs_name');
+            const exportSheetsBtn = $('#export-sheets-btn');
+
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
             const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
             const DELAY_BETWEEN_REQUESTS = 250;
@@ -469,6 +513,7 @@
                 sitemapLinks.empty();
                 resultsTbody.empty();
                 totalUrls = processedUrls = errorCount = 0;
+                $('#sheet-management-container').addClass('hidden');
             }
 
             function displaySitemapSelection(sitemaps) {
@@ -567,65 +612,127 @@
                         } else if (activeRequests === 0) {
                             $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
                             submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                            $('#export-sheets-btn').removeClass('hidden');
+                            $('#export-form').removeClass('hidden');
+                            $('#sheet-management-container').removeClass('hidden');
                         }
                     });
             }
 
-            const exportSheetsBtn = $('#export-sheets-btn');
+            const saveSheetBtn = $('#save_sheet_btn');
+            const sheetNameInput = $('#sheet_name_input');
+            const sheetIdInput = $('#sheet_id_input');
+            const savedSheetsSelect = $('#saved_sheets_select');
 
-            downloadCsvBtn.hide(); // Eski CSV düğmesini gizle
-            exportSheetsBtn.removeClass('hidden');
+            // Sayfa yüklendiğinde kayıtlı sheet'leri getir
+            loadSavedSheets();
 
-            exportSheetsBtn.on('click', function() {
-                exportToGoogleSheets();
-            });
+            saveSheetBtn.on('click', function() {
+                const sheetName = sheetNameInput.val().trim();
+                const sheetId = sheetIdInput.val().trim();
 
-            function exportToGoogleSheets() {
-                const headers = ["Durum", "URL", "Title", "Description", "H1", "Title-tf", "Description-tf", "H1-tf", "Bulunan Hatalar"];
-                const rows = [headers];
+                if (!sheetName || !sheetId) {
+                    alert('Lütfen E-Tablo adı ve ID girin.');
+                    return;
+                }
 
-                resultsTbody.find('tr').each(function() {
-                    const row = $(this);
-                    const status = row.find('.status .status-icon').text();
-                    const url = row.find('.url a').attr('href');
-                    const titleText = row.find('.title').text();
-                    const descriptionText = row.find('.description').text();
-                    const h1Text = row.find('.h1').text();
-                    const issues = row.data('issues') || [];
-
-                    const titleText_tf = (titleText.length >= 50 && titleText.length <= 60).toString();
-                    const descriptionText_tf = (descriptionText.length >= 70 && descriptionText.length <= 160).toString();
-                    const h1Text_tf = (h1Text.length > 0).toString();
-                    const issuesText = issues.join(', ');
-
-                    rows.push([status, url, titleText, descriptionText, h1Text, titleText_tf, descriptionText_tf, h1Text_tf, issuesText]);
-                });
-
-                exportSheetsBtn.attr('aria-busy', 'true').prop('disabled', true).text('E-Tablo Oluşturuluyor...');
-
+                // API'ye kaydetme isteği gönder
                 $.ajax({
-                    url: '{{ path("api_export_to_sheets") }}',
+                    url: '{{ path("api_save_sheet_config") }}',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ rows: rows, domain: currentDomain }),
+                    data: JSON.stringify({ name: sheetName, id: sheetId }),
                     success: function(response) {
                         if (response.success) {
-                            alert('Başarılı! E-tablo oluşturuldu ve yeni bir sekmede açılıyor.');
-                            window.open(response.spreadsheet_url, '_blank');
+                            alert('E-Tablo başarıyla kaydedildi!');
+                            sheetNameInput.val('');
+                            sheetIdInput.val('');
+                            loadSavedSheets(); // Listeyi güncelle
                         } else {
-                            alert('Bir hata oluştu: ' + response.message);
+                            alert('Hata: ' + response.message);
                         }
                     },
-                    error: function(xhr) {
-                        const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Sunucuya bağlanırken bir hata oluştu.';
-                        alert('Hata: ' + errorMsg);
+                    error: function() {
+                        alert('Sunucuya bağlanırken bir hata oluştu.');
+                    }
+                });
+            });
+
+            savedSheetsSelect.on('change', function() {
+                const selectedSheetId = $(this).val();
+                if (selectedSheetId) {
+                    spreadsheetIdInput.val(selectedSheetId).prop('readonly', true);
+                } else {
+                    spreadsheetIdInput.val('').prop('readonly', false);
+                }
+            });
+
+            function loadSavedSheets() {
+                $.ajax({
+                    url: '{{ path("api_get_saved_sheets") }}',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success && response.sheets) {
+                            savedSheetsSelect.empty();
+                            savedSheetsSelect.append($('<option>', { value: '', text: 'Kaydedilmiş E-Tablo Seçin' }));
+                            for (const name in response.sheets) {
+                                savedSheetsSelect.append($('<option>', { value: response.sheets[name], text: name }));
+                            }
+                        } else {
+                            console.error('Kayıtlı E-Tablolar yüklenirken hata:', response.message);
+                        }
                     },
-                    complete: function() {
-                        exportSheetsBtn.removeAttr('aria-busy').prop('disabled', false).text("Google E-Tablolar'a Aktar");
+                    error: function() {
+                        console.error('Kayıtlı E-Tablolar yüklenirken sunucu hatası.');
                     }
                 });
             }
+
+            // Sheet ID girildiğinde sekmeleri getir
+            function fetchSheetNames(spreadsheetId) {
+                if (!spreadsheetId) {
+                    tabsNameSelect.html('<option>Önce Sheet ID girin</option>').prop('disabled', true);
+                    return;
+                }
+
+                tabsNameSelect.html('<option>Sekmeler yükleniyor...</option>').prop('disabled', true);
+
+                $.ajax({
+                    url: '{{ path("api_get_sheet_names") }}',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ spreadsheetId: spreadsheetId }),
+                    success: function(response) {
+                        if (response.success && response.sheets && response.sheets.length > 0) {
+                            tabsNameSelect.empty();
+                            response.sheets.forEach(function(sheetName) {
+                                tabsNameSelect.append($('<option>', { value: sheetName, text: sheetName }));
+                            });
+                            tabsNameSelect.prop('disabled', false);
+                        } else {
+                            tabsNameSelect.html('<option>Sekme bulunamadı</option>').prop('disabled', true);
+                        }
+                    },
+                    error: function() {
+                        tabsNameSelect.html('<option>Sekmeleri alırken hata oluştu</option>').prop('disabled', true);
+                    }
+                });
+            }
+
+            spreadsheetIdInput.on('blur', function() {
+                const spreadsheetId = $(this).val().trim();
+                fetchSheetNames(spreadsheetId);
+            });
+
+            savedSheetsSelect.on('change', function() {
+                const selectedSheetId = $(this).val();
+                if (selectedSheetId) {
+                    spreadsheetIdInput.val(selectedSheetId).prop('readonly', true);
+                    fetchSheetNames(selectedSheetId);
+                } else {
+                    spreadsheetIdInput.val('').prop('readonly', false);
+                    tabsNameSelect.html('<option>Önce Sheet ID girin</option>').prop('disabled', true);
+                }
+            });
 
             function updateRow(row, data) {
                 const escapeHtml = text => $('<div>').text(text).html();
@@ -656,3 +763,4 @@
         });
     </script>
 {% endblock %}
+

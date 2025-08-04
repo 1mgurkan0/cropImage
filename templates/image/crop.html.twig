@@ -314,7 +314,7 @@
     function handleFiles(files) {
         const file = files[0];
         if (file) {
-            originalImageType = file.type; // Store the original image type
+            originalImageType = file.type;
             const reader = new FileReader();
             reader.onload = function (e) {
                 cropperPreview.src = e.target.result;
