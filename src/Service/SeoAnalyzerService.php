@@ -94,7 +94,6 @@ class SeoAnalyzerService
                 return ['type' => 'index', 'sitemaps' => array_unique($urls)];
             }
 
-            // Check for urlset
             if (isset($xml->url)) {
                 foreach ($xml->url as $urlNode) {
                     $urls[] = (string)$urlNode->loc;
@@ -184,7 +183,7 @@ class SeoAnalyzerService
 
         $uniqueLinks = array_unique($allLinks);
         $brokenLinks = [];
-        $linkChunks = array_chunk($uniqueLinks, 10); // Process in chunks of 10
+        $linkChunks = array_chunk($uniqueLinks, 10);
 
         $chunkCount = count($linkChunks);
         foreach ($linkChunks as $index => $chunk) {
@@ -317,12 +316,11 @@ class SeoAnalyzerService
 
             $sheetsService = new Sheets($client);
 
-            // Clear existing data in the specified range
             $clearRange = $tabName;
             $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
             $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
 
-            // Append new data
+            // Yeni Veri EKleme
             $updateRange = $tabName . '!A1';
             $body = new \Google_Service_Sheets_ValueRange([
                 'values' => $rows
