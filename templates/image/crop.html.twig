@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Görsel Kırp</title>
+    <title>Image Cropper</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -171,18 +171,18 @@
 <div class="container my-5 ">
     <div class="card p-4 shadow-lg converter-card">
         <form id="cropForm" method="POST" action="{{ path('app_image_crop') }}">
-            <h1 class="card-title text-center mb-4">Görsel Kırp</h1>
+            <h1 class="card-title text-center mb-4">Image Cropper</h1>
 
             <ul class="intro-text lead mb-5 text-start">
-                <li>Kırpmak istediğiniz görseli seçin.</li>
-                <li>Görseli dilediğiniz gibi kırpın ve indirin.</li>
+                <li>Select the image you want to crop.</li>
+                <li>Crop the image as you like and download it.</li>
             </ul>
 
             <div class="mb-3">
-                <label for="imageInput" class="form-label fw-bold text-muted">Görsel Seç</label>
+                <label for="imageInput" class="form-label fw-bold text-muted">Select Image</label>
                 <div id="drop-area-crop" class="file-upload-area p-5 text-center">
-                    <span class="text-muted d-block mb-2">Dosyayı buraya sürükleyin</span>
-                    <label for="imageInput" class="btn btn-primary file-upload-btn">Dosya Seç</label>
+                    <span class="text-muted d-block mb-2">Drag file here</span>
+                    <label for="imageInput" class="btn btn-primary file-upload-btn">Choose File</label>
                     <input type="file" id="imageInput" accept="image/*" class="d-none" required>
                 </div>
             </div>
@@ -192,7 +192,7 @@
             </div>
 
             <input type="hidden" name="croppedImage" id="croppedImage">
-            <button type="submit" class="btn btn-primary w-100 mt-3 submit-btn">Kırp ve İndir</button>
+            <button type="submit" class="btn btn-primary w-100 mt-3 submit-btn">Crop and Download</button>
         </form>
     </div>
 </div>
@@ -207,8 +207,8 @@
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
-                    <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
+                    <h2 class="card-title-link mt-3">Image Compression</h2>
+                    <p class="card-text text-center mt-2">Gain speed by reducing file size. Compress while maintaining quality.</p>
                 </div>
             </a>
         </div>
@@ -220,8 +220,8 @@
                             <path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3 text-center">Görsel Dönüştürme</h2>
-                    <p class="card-text text-center mt-2">Farklı formatlara dönüştürün (JPG, PNG, WebP).</p>
+                    <h2 class="card-title-link mt-3 text-center">Image Converter</h2>
+                    <p class="card-text text-center mt-2">Convert to different formats (JPG, PNG, WebP).</p>
                 </div>
             </a>
         </div>
@@ -233,8 +233,8 @@
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3 text-center">Seo Analyzer</h2>
-                    <p class="card-text text-center mt-2">Web sitenizin SEO performansını anında analiz edin. Eksiklerinizi görün ve iyileştirme fırsatlarını keşfedin!</p>
+                    <h2 class="card-title-link mt-3 text-center">SEO Analyzer</h2>
+                    <p class="card-text text-center mt-2">Instantly analyze your website's SEO performance. See your shortcomings and discover opportunities for improvement!</p>
                 </div>
             </a>
         </div>
@@ -247,8 +247,8 @@
                             <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3 text-center">Kırık Link Denetleyici</h2>
-                    <p class="card-text text-center mt-2">Bir sayfadaki 404 ve diğer hatalı linkleri bulun.</p>
+                    <h2 class="card-title-link mt-3 text-center">Broken Link Checker</h2>
+                    <p class="card-text text-center mt-2">Find 404s and other broken links on a page.</p>
                 </div>
             </a>
         </div>
@@ -262,8 +262,8 @@
                     <path d="M14 1.5a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
                 </svg>
             </span>
-                    <h2 class="card-title-link mt-3 text-center">Metin Sayacı</h2>
-                    <p class="card-text text-center mt-2">Girdiğiniz metindeki karakter ve kelime sayısını kolayca öğrenin.</p>
+                    <h2 class="card-title-link mt-3 text-center">Text Counter</h2>
+                    <p class="card-text text-center mt-2">Easily find out the number of characters and words in the text you enter.</p>
                 </div>
             </a>
         </div>
@@ -344,7 +344,7 @@
 
             form.submit();
         } else {
-            alert('Lütfen önce bir görsel seçin ve kırpma alanını ayarlayın.');
+            alert('Please select an image first and adjust the cropping area.');
         }
     });
 </script>

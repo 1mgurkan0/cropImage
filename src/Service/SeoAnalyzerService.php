@@ -18,24 +18,6 @@ class SeoAnalyzerService
         $this->projectDir = $projectDir;
     }
 
-    public function fetchContent(string $url): array
-    {
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_TIMEOUT => 120,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SEOBot/1.0; +http://www.example.com/bot.html)',
-        ]);
-        $data = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        return $httpCode >= 400 ? ['html' => false, 'http_code' => $httpCode] : ['html' => $data, 'http_code' => $httpCode];
-    }
-
     public function extractMetaData(?string $html): array
     {
         $result = ['title' => '', 'description' => '', 'h1' => ''];
@@ -53,18 +35,92 @@ class SeoAnalyzerService
         return array_map('trim', $result);
     }
 
-    public function getSitemapFromDomain(string $domain): string|false
+    public function fetchContent(string $url): array
     {
-        $robotsUrl = rtrim($domain, '/') . '/robots.txt';
-        $content = $this->fetchContent($robotsUrl)['html'];
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_TIMEOUT => 30, // 120 çok uzun, 30 idealdir
+            // Otomatik GZIP çözme (Çok önemli)
+            CURLOPT_ENCODING => '',
+            // Daha gerçekçi bir tarayıcı taklidi
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            CURLOPT_HTTPHEADER => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language: tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Connection: keep-alive'
+            ]
+        ]);
 
-        if ($content === false) {
+        $data = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch); // Hata varsa görelim
+        curl_close($ch);
+
+        // Boş veri veya hata durumunu kontrol et
+        if ($data === false || $httpCode >= 400) {
+            // Debug için error log'a yazabilirsin: error_log("CURL Error: $curlError URL: $url Code: $httpCode");
+            return ['html' => false, 'http_code' => $httpCode];
+        }
+
+        return ['html' => $data, 'http_code' => $httpCode];
+    }
+
+    public function getSitemapFromDomain(string $inputUrl): string|false
+    {
+        // 1. URL'i parçala ve kök dizini (Root Domain) bul
+        $parsed = parse_url($inputUrl);
+
+        // Eğer http/https girilmemişse varsayılan ekle
+        if (!isset($parsed['scheme'])) {
+            $inputUrl = 'https://' . $inputUrl;
+            $parsed = parse_url($inputUrl);
+        }
+
+        $scheme = $parsed['scheme'] ?? 'https';
+        $host = $parsed['host'] ?? '';
+
+        if (empty($host)) {
             return false;
         }
 
-        preg_match('/^Sitemap:\s*(.*)$/im', $content, $matches);
+        $baseUrl = $scheme . '://' . $host;
 
-        return $matches[1] ?? false;
+        // 2. Robots.txt'yi kontrol et
+        $robotsUrl = $baseUrl . '/robots.txt';
+        $fetch = $this->fetchContent($robotsUrl);
+
+        if ($fetch['html'] !== false) {
+            // Case-insensitive (i) ve multiline (m) arama yap
+            if (preg_match('/^Sitemap:\s*(.*)$/im', $fetch['html'], $matches)) {
+                return trim($matches[1]);
+            }
+        }
+
+        // 3. Robots.txt'de yoksa veya robots.txt açılmadıysa standart yolları dene
+        $commonPaths = [
+            '/sitemap_index.xml',
+            '/sitemap.xml',
+            '/sitemap/sitemap.xml'
+        ];
+
+        foreach ($commonPaths as $path) {
+            $tryUrl = $baseUrl . $path;
+            // Sadece başlık (HEAD) kontrolü yapıp dosya var mı bakabiliriz ama
+            // senin yapında direkt indirip bakmak daha garanti.
+            $check = $this->fetchContent($tryUrl);
+            if ($check['http_code'] === 200 && !empty($check['html'])) {
+                // İçerik gerçekten XML mi diye basitçe bak
+                if (str_contains($check['html'], '<?xml') || str_contains($check['html'], '<urlset') || str_contains($check['html'], '<sitemapindex')) {
+                    return $tryUrl;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function parseSitemap(string $sitemapUrl): array|false
@@ -271,80 +327,4 @@ class SeoAnalyzerService
         return $scheme . '://' . $host . $path . '/' . $href;
     }
 
-    public function getGoogleSheetNames(string $spreadsheetId): array
-    {
-        try {
-            $client = new GoogleClient();
-            $client->setApplicationName('Image Editor Seo Analyzer');
-            $client->setScopes([Sheets::SPREADSHEETS_READONLY]);
-            $credentialsPath = $this->projectDir . '/config/google/credential.json';
-            $client->setAuthConfig($credentialsPath);
-
-            $sheetsService = new Sheets($client);
-
-            $spreadsheet = $sheetsService->spreadsheets->get($spreadsheetId);
-            $sheets = $spreadsheet->getSheets();
-
-            $sheetNames = [];
-            foreach ($sheets as $sheet) {
-                $sheetNames[] = $sheet->getProperties()->getTitle();
-            }
-
-            return ['success' => true, 'sheets' => $sheetNames];
-
-        } catch (\Google\Service\Exception $e) {
-            $message = 'Google Sheets API hatası: ' . $e->getMessage();
-            if (str_contains($e->getMessage(), 'Requested entity was not found')) {
-                $message = 'Geçersiz E-Tablo ID veya E-Tablo bulunamadı.';
-            } elseif (str_contains($e->getMessage(), 'The caller does not have permission')) {
-                $message = 'E-Tabloya erişim izniniz yok. Lütfen doğru izinlere sahip olduğunuzdan emin olun.';
-            }
-            return ['success' => false, 'message' => $message];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Beklenmeyen bir hata oluştu: ' . $e->getMessage()];
-        }
-    }
-
-    public function exportToGoogleSheets(array $rows, string $spreadsheetId, string $tabName): array
-    {
-        try {
-            $client = new GoogleClient();
-            $client->setApplicationName('Image Editor Seo Analyzer');
-            $client->setScopes([Sheets::SPREADSHEETS]);
-            $credentialsPath = $this->projectDir . '/config/google/credential.json';
-            $client->setAuthConfig($credentialsPath);
-
-            $sheetsService = new Sheets($client);
-
-            $clearRange = $tabName;
-            $clearBody = new \Google_Service_Sheets_ClearValuesRequest();
-            $sheetsService->spreadsheets_values->clear($spreadsheetId, $clearRange, $clearBody);
-
-            // Yeni Veri EKleme
-            $updateRange = $tabName . '!A1';
-            $body = new \Google_Service_Sheets_ValueRange([
-                'values' => $rows
-            ]);
-            $params = ['valueInputOption' => 'USER_ENTERED'];
-            $sheetsService->spreadsheets_values->update($spreadsheetId, $updateRange, $body, $params);
-
-            return [
-                'success' => true,
-                'spreadsheet_url' => 'https://docs.google.com/spreadsheets/d/' . $spreadsheetId
-            ];
-
-        } catch (\Google\Service\Exception $e) {
-            $message = 'Google Sheets API hatası: ' . $e->getMessage();
-            if (str_contains($e->getMessage(), 'Requested entity was not found')) {
-                $message = 'Geçersiz E-Tablo ID veya E-Tablo bulunamadı.';
-            } elseif (str_contains($e->getMessage(), 'The caller does not have permission')) {
-                $message = 'E-Tabloya yazma izniniz yok. Lütfen doğru izinlere sahip olduğunuzdan emin olun.';
-            } elseif (str_contains($e->getMessage(), 'Unable to parse range') || str_contains($e->getMessage(), 'Invalid Sheet name')) {
-                $message = 'Geçersiz Sekme Adı. Lütfen E-Tablodaki mevcut bir sekme adını girin.';
-            }
-            return ['success' => false, 'message' => $message];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Beklenmeyen bir hata oluştu: ' . $e->getMessage()];
-        }
-    }
 }

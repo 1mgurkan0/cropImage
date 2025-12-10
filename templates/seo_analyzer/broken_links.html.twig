@@ -127,16 +127,16 @@
 <main class="container my-5">
     <div class="card p-4 shadow-lg converter-card">
         <hgroup>
-            <h1 class="card-title text-center mb-4">Kırık Link Denetleyici</h1>
-            <h2 class="intro-text lead mb-5 text-center">Bir sayfadaki tüm linkleri kontrol edin ve 404 gibi hataları bulun.</h2>
+            <h1 class="card-title text-center mb-4">Broken Link Checker</h1>
+            <h2 class="intro-text lead mb-5 text-center">Check all links on a page and detect errors like 404s.</h2>
         </hgroup>
 
         <form id="broken-link-form">
             <div class="mb-3">
-                <label for="url_to_check" class="form-label">Kontrol Edilecek URL</label>
-                <input type="url" id="url_to_check" name="url_to_check" placeholder="https://example.com/bir-sayfa" required>
+                <label for="url_to_check" class="form-label">URL to Check</label>
+                <input type="url" id="url_to_check" name="url_to_check" placeholder="https://example.com/a-page" required>
             </div>
-            <button type="submit" id="submit-btn" class="submit-btn w-100">Kırık Linkleri Bul</button>
+            <button type="submit" id="submit-btn" class="submit-btn w-100">Find Broken Links</button>
         </form>
 
         <div id="progress-container" class="hidden mt-4">
@@ -145,15 +145,15 @@
         </div>
 
         <div id="results-container" class="hidden mt-4">
-            <h3 class="card-title mb-3">Sonuçlar</h3>
+            <h3 class="card-title mb-3">Results</h3>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
-                        <tr>
-                            <th>Bulunan Link</th>
-                            <th>HTTP Durum Kodu</th>
-                            <th>Durum</th>
-                        </tr>
+                    <tr>
+                        <th>Found Link</th>
+                        <th>HTTP Status Code</th>
+                        <th>Status</th>
+                    </tr>
                     </thead>
                     <tbody id="results-tbody"></tbody>
                 </table>
@@ -172,8 +172,8 @@
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Görsel Sıkıştırma</h2>
-                    <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
+                    <h2 class="card-title-link mt-3">Image Compression</h2>
+                    <p class="card-text text-center mt-2">Gain speed by reducing file size. Compress while maintaining quality.</p>
                 </div>
             </a>
         </div>
@@ -185,8 +185,8 @@
                             <path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Görsel Dönüştürme</h2>
-                    <p class="card-text text-center mt-2">Farklı formatlara hızlı ve kolay dönüştürme.</p>
+                    <h2 class="card-title-link mt-3">Image Converter</h2>
+                    <p class="card-text text-center mt-2">Fast and easy conversion to different formats.</p>
                 </div>
             </a>
         </div>
@@ -198,8 +198,8 @@
                             <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Görsel Kırpma</h2>
-                    <p class="card-text text-center mt-2">İstediğiniz alanı öne çıkarın. Gereksiz detayları kırpın ve sadeleştirin.</p>
+                    <h2 class="card-title-link mt-3">Image Cropper</h2>
+                    <p class="card-text text-center mt-2">Highlight the area you want. Crop out unnecessary details and simplify.</p>
                 </div>
             </a>
         </div>
@@ -211,8 +211,8 @@
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                         </svg>
                     </span>
-                    <h2 class="card-title-link mt-3">Seo Analyzer</h2>
-                    <p class="card-text text-center mt-2">Web sitenizin SEO performansını anında analiz edin. Eksiklerinizi görün ve iyileştirme fırsatlarını keşfedin!</p>
+                    <h2 class="card-title-link mt-3">SEO Analyzer</h2>
+                    <p class="card-text text-center mt-2">Instantly analyze your website's SEO performance. See your shortcomings and discover opportunities for improvement!</p>
                 </div>
             </a>
         </div>
@@ -226,8 +226,8 @@
                     <path d="M14 1.5a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
                 </svg>
             </span>
-                    <h2 class="card-title-link mt-3 text-center">Metin Sayacı</h2>
-                    <p class="card-text text-center mt-2">Girdiğiniz metindeki karakter ve kelime sayısını kolayca öğrenin.</p>
+                    <h2 class="card-title-link mt-3 text-center">Text Counter</h2>
+                    <p class="card-text text-center mt-2">Easily find out the number of characters and words in the text you enter.</p>
                 </div>
             </a>
         </div>
@@ -238,65 +238,65 @@
 {% block javascripts %}
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-    $(function() {
-        const form = $('#broken-link-form');
-        const submitBtn = $('#submit-btn');
-        const progressContainer = $('#progress-container');
-        const progressBar = $('#progress-bar');
-        const progressText = $('#progress-text');
-        const resultsContainer = $('#results-container');
-        const resultsTbody = $('#results-tbody');
+        $(function() {
+            const form = $('#broken-link-form');
+            const submitBtn = $('#submit-btn');
+            const progressContainer = $('#progress-container');
+            const progressBar = $('#progress-bar');
+            const progressText = $('#progress-text');
+            const resultsContainer = $('#results-container');
+            const resultsTbody = $('#results-tbody');
 
-        form.on('submit', function(e) {
-            e.preventDefault();
-            const url = $('#url_to_check').val();
+            form.on('submit', function(e) {
+                e.preventDefault();
+                const url = $('#url_to_check').val();
 
-            if (!url) {
-                alert('Lütfen geçerli bir URL girin.');
-                return;
-            }
+                if (!url) {
+                    alert('Please enter a valid URL.');
+                    return;
+                }
 
-            submitBtn.attr('aria-busy', 'true').prop('disabled', true);
-            resultsContainer.addClass('hidden');
-            resultsTbody.empty();
-            progressContainer.removeClass('hidden');
-            progressText.text('Linkler taranıyor ve kontrol ediliyor, lütfen bekleyin...');
+                submitBtn.attr('aria-busy', 'true').prop('disabled', true);
+                resultsContainer.addClass('hidden');
+                resultsTbody.empty();
+                progressContainer.removeClass('hidden');
+                progressText.text('Links are being scanned and checked, please wait...');
 
-            $.post("{{ path('api_find_broken_links') }}", { url: url })
-                .done(function(response) {
-                    if (response.success) {
-                        displayResults(response.data);
-                    } else {
-                        alert('Hata: ' + response.message);
-                    }
-                })
-                .fail(function() {
-                    alert('Sunucuya bağlanırken bir hata oluştu.');
-                })
-                .always(function() {
-                    submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                    progressContainer.addClass('hidden');
-                });
-        });
+                $.post("{{ path('api_find_broken_links') }}", { url: url })
+                    .done(function(response) {
+                        if (response.success) {
+                            displayResults(response.data);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    })
+                    .fail(function() {
+                        alert('An error occurred while connecting to the server.');
+                    })
+                    .always(function() {
+                        submitBtn.removeAttr('aria-busy').prop('disabled', false);
+                        progressContainer.addClass('hidden');
+                    });
+            });
 
-        function displayResults(links) {
-            resultsContainer.removeClass('hidden');
-            if (links.length === 0) {
-                resultsTbody.append('<tr><td colspan="3">Sayfada hiç kırık link bulunamadı.</td></tr>');
-                return;
-            }
+            function displayResults(links) {
+                resultsContainer.removeClass('hidden');
+                if (links.length === 0) {
+                    resultsTbody.append('<tr><td colspan="3">No broken links found on the page.</td></tr>');
+                    return;
+                }
 
-            links.forEach(link => {
-                const row = `
+                links.forEach(link => {
+                    const row = `
                     <tr>
                         <td><a href="${link.url}" target="_blank">${link.url}</a></td>
                         <td>${link.http_code}</td>
-                        <td><span class="status-error">Kırık</span></td>
+                        <td><span class="status-error">Broken</span></td>
                     </tr>
                 `;
-                resultsTbody.append(row);
-            });
-        }
-    });
+                    resultsTbody.append(row);
+                });
+            }
+        });
     </script>
 {% endblock %}

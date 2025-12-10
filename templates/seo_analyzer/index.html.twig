@@ -1,5 +1,5 @@
 {% block stylesheets %}
-    <title>Seo Analizcisi</title>
+    <title>SEO Analyzer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -187,8 +187,8 @@
     <main class="container">
         <div class="card p-4 shadow-lg converter-card">
             <hgroup>
-                <h1>Asenkron SEO Analiz Aracı</h1>
-                <h2>Sitemap'teki sayfaları anlık olarak analiz edin.</h2>
+                <h1>Async SEO Analysis Tool</h1>
+                <h2>Analyze pages in the sitemap in real-time.</h2>
             </hgroup>
 
             <form id="domain-form" style="
@@ -199,78 +199,37 @@
             border: 1px solid var(--border-color);">
                 <label for="domain_url">Domain URL</label>
                 <input type="url" id="domain_url" name="domain_url" placeholder="https://example.com" style="background-color: var(--card-bg-color); color:#000000" required >
-                <small>Lütfen analiz edilecek sitenin ana domain adresini girin. Sistem robots.txt dosyasından sitemap'i otomatik bulacaktır.</small>
-                <button type="submit" id="submit-btn" class="submit-btn">Sitemap Kategorilerini Getir</button>
+                <small>Please enter the main domain address. The system will automatically find the sitemap from robots.txt.</small>
+                <button type="submit" id="submit-btn" class="submit-btn">Get Sitemap Categories</button>
             </form>
 
             <div id="sitemap-selection-container" class="hidden ms-3 me-3 ">
-                <h4>Analiz Edilecek Sitemap Kategorisini Seçin</h4>
+                <h4>Select Sitemap Category to Analyze</h4>
                 <div class="row">
                     <div class="col py-3 px-3" id="sitemap-links"></div>
                 </div>
-                <button id="analyze-selected-btn" class="col-12 submit-btn hidden mt-3">Seçilenleri Analiz Et</button>
+                <button id="analyze-selected-btn" class="col-12 submit-btn hidden mt-3">Analyze Selected</button>
             </div>
 
             <div id="progress-container" class="hidden">
-                <h3 id="progress-title">Analiz İlerlemesi</h3>
+                <h3 id="progress-title">Analysis Progress</h3>
                 <progress id="progress-bar" value="0" max="100"></progress>
-                <p id="progress-text" class="text-black">0/0 URL analiz edildi.</p>
+                <p id="progress-text" class="text-black">0/0 URLs analyzed.</p>
             </div>
-
-            <div id="sheet-management-container" class="hidden mt-4 card p-4 shadow-lg converter-card">
-                <hgroup>
-                    <h4>Yeni Bir E-Tablo Kaydet</h4>
-                </hgroup>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="sheet_name_input">Kısa İsim (örn: Orgu Analiz)</label>
-                        <input type="text" id="sheet_name_input" name="sheet_name" placeholder="E-Tabloya bir isim verin" style="background-color: var(--card-bg-color); color:#000000;">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="sheet_id_input">Google Sheet ID</label>
-                        <input type="text" id="sheet_id_input" name="sheet_id" placeholder="Kaydedilecek E-Tablonun ID'si" style="background-color: var(--card-bg-color); color:#000000;">
-                    </div>
-
-                    <button id="save_sheet_btn" class="col-12 submit-btn">Kaydet</button>
-
-                </div>
-            </div>
-
-            <form id="export-form" class="hidden mt-4 card p-4 shadow-lg converter-card">
-                <hgroup>
-                    <h4>Analiz Sonuçlarını Dışa Aktar</h4>
-                </hgroup>
-                <div class="row">
-                    <div class="col-6">
-                        <label for="saved_sheets_select">Kayıtlı E-Tablolardan Seçin</label>
-                        <select id="saved_sheets_select" class="form-select" style="background-color: var(--card-bg-color); color:#000000;">
-                            <option value="">Kaydedilmiş E-Tablo Seçin</option>
-                        </select>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <label for="tabs_name">Sekme Adı</label>
-                        <select name="tabs_name" id="tabs_name" disabled class="form-select" style="background-color: var(--card-bg-color); color:#000000;">
-                            <option>Önce Tablo Seçin</option>
-                        </select>
-                    </div>
-                    <button type="button" id="export-sheets-btn" class="col-12 submit-btn">Google E-Tablolar'a Aktar</button>
-
-                </div>
-            </form>
 
             <div id="results-container" class="hidden " >
                 <hr>
-                <h3>Analiz Sonuçları</h3>
+                <h3>Analysis Results</h3>
                 <div class="overflow-auto">
                     <table>
                         <thead>
                         <tr>
-                            <th class="status">Durum</th>
+                            <th class="status">Status</th>
                             <th class="url">URL</th>
                             <th>Title</th>
                             <th>Description</th>
                             <th>H1</th>
-                            <th>Bulunan Sorunlar</th>
+                            <th>Issues Found</th>
                         </tr>
                         </thead>
                         <tbody id="results-tbody"></tbody>
@@ -291,8 +250,8 @@
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
                         </svg>
                     </span>
-                        <h2 class="card-title-link mt-3 text-center">Görsel Sıkıştırma</h2>
-                        <p class="card-text text-center mt-2">Dosya boyutunu düşürerek hız kazanın. Kaliteyi korurken sıkıştırın.</p>
+                        <h2 class="card-title-link mt-3 text-center">Image Compress</h2>
+                        <p class="card-text text-center mt-2">Reduce file size and gain speed. Compress without losing quality.</p>
                     </div>
                 </a>
             </div>
@@ -305,8 +264,8 @@
                         </svg>
 
                     </span>
-                        <h2 class="card-title-link mt-3">Görsel Dönüştürme</h2>
-                        <p class="card-text text-center mt-2">Farklı formatlara hızlı ve kolay dönüştürme.</p>
+                        <h2 class="card-title-link mt-3">Image Converter</h2>
+                        <p class="card-text text-center mt-2">Fast and easy conversion to different formats.</p>
                     </div>
                 </a>
             </div>
@@ -318,8 +277,8 @@
                             <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
                         </svg>
                     </span>
-                        <h2 class="card-title-link mt-3 text-center">Görsel Kırpma</h2>
-                        <p class="card-text text-center mt-2">İstediğiniz alanı öne çıkarın. Gereksiz detayları kırpın ve sadeleştirin.</p>
+                        <h2 class="card-title-link mt-3 text-center">Image Crop</h2>
+                        <p class="card-text text-center mt-2">Highlight the area you want. Crop unnecessary details.</p>
                     </div>
                 </a>
             </div>
@@ -332,8 +291,8 @@
                             <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
                         </svg>
                     </span>
-                        <h2 class="card-title-link mt-3 text-center">Kırık Link Denetleyici</h2>
-                        <p class="card-text text-center mt-2">Bir sayfadaki 404 ve diğer hatalı linkleri bulun.</p>
+                        <h2 class="card-title-link mt-3 text-center">Broken Link Checker</h2>
+                        <p class="card-text text-center mt-2">Find 404s and other broken links on a page.</p>
                     </div>
                 </a>
             </div>
@@ -347,8 +306,8 @@
                     <path d="M14 1.5a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
                 </svg>
             </span>
-                        <h2 class="card-title-link mt-3 text-center">Metin Sayacı</h2>
-                        <p class="card-text text-center mt-2">Girdiğiniz metindeki karakter ve kelime sayısını kolayca öğrenin.</p>
+                        <h2 class="card-title-link mt-3 text-center">Text Counter</h2>
+                        <p class="card-text text-center mt-2">Easily learn the character and word count in your text.</p>
                     </div>
                 </a>
             </div>
@@ -371,77 +330,8 @@
             const resultsTbody = $('#results-tbody');
             const analyzeSelectedBtn = $('#analyze-selected-btn');
 
-            const exportForm = $('#export-form');
-            const spreadsheetIdInput = $('#spreadsheet_id');
-            const tabsNameSelect = $('#tabs_name');
-            const exportSheetsBtn = $('#export-sheets-btn');
-
-            exportSheetsBtn.on('click', function() {
-                const spreadsheetId = $('#saved_sheets_select').val();
-                const tabName = $('#tabs_name').val();
-
-                if (!spreadsheetId || !tabName) {
-                    alert('Lütfen bir E-Tablo ve Sekme Adı seçin.');
-                    return;
-                }
-
-                const rows = [];
-                // Başlıkları al
-                const headers = [];
-                $('#results-container thead th').each(function() {
-                    headers.push($(this).text().trim());
-                });
-                rows.push(headers);
-
-                // Verileri al
-                $('#results-tbody tr').each(function() {
-                    const rowData = [];
-                    $(this).find('td').each(function(index) {
-                        if (index === 0) { // Durum sütunu
-                            rowData.push($(this).find('.status-icon').text().trim());
-                        } else if (index === 1) { // URL sütunu
-                            rowData.push($(this).find('a').attr('href') || $(this).text().trim());
-                        } else if (index === 5) { // Sorunlar sütunu
-                            const issues = [];
-                            $(this).find('li').each(function() {
-                                issues.push($(this).text().trim());
-                            });
-                            rowData.push(issues.join('; ')); // Sorunları noktalı virgülle birleştir
-                        } else {
-                            rowData.push($(this).text().trim());
-                        }
-                    });
-                    rows.push(rowData);
-                });
-
-                if (rows.length <= 1) { // Sadece başlıklar varsa
-                    alert('Dışa aktarılacak analiz sonucu bulunamadı.');
-                    return;
-                }
-
-                exportSheetsBtn.attr('aria-busy', 'true').prop('disabled', true).text('Aktarılıyor...');
-
-                $.ajax({
-                    url: '{{ path("api_export_to_sheets") }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ rows: rows, spreadsheetId: spreadsheetId, tabName: tabName }),
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Analiz sonuçları başarıyla Google E-Tablolar\'a aktarıldı!\nE-Tablo URL: ' + response.spreadsheet_url);
-                            window.open(response.spreadsheet_url, '_blank');
-                        } else {
-                            alert('Hata: ' + response.message);
-                        }
-                    },
-                    complete: function() {
-                        exportSheetsBtn.removeAttr('aria-busy').prop('disabled', false).text('Google E-Tablolar\'a Aktar');
-                    }
-                });
-            });
-
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
-            const CONCURRENT_REQUESTS = 1; // Aynı anda çalışacak istek sayısı
+            const CONCURRENT_REQUESTS = 1;
             const DELAY_BETWEEN_REQUESTS = 250;
             let activeRequests = 0;
             let queue = [];
@@ -453,12 +343,12 @@
                 currentDomain = domainUrl;
 
                 if (!domainUrl) {
-                    alert('Lütfen geçerli bir domain URL si girin.');
+                    alert('Please enter a valid domain URL.');
                     return;
                 }
 
                 resetUI();
-                submitBtn.attr('aria-busy', 'true').prop('disabled', true).text('Sitemap Aranıyor...');
+                submitBtn.attr('aria-busy', 'true').prop('disabled', true).text('Searching Sitemap...');
 
                 $.post('{{ path("api_get_sitemaps") }}', { domain: domainUrl })
                     .done(function(response) {
@@ -469,28 +359,27 @@
                                 populateTable(response.data.urls);
                             }
                         } else {
-                            alert('Hata: ' + response.message);
+                            alert('Error: ' + response.message);
                             resetUI();
                         }
                     })
                     .fail(function() {
-                        alert('Sunucuya bağlanırken bir hata oluştu. Lütfen tekrar deneyin.');
+                        alert('An error occurred while connecting to the server. Please try again.');
                         resetUI();
                     })
                     .always(function() {
-                        submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Sitemap Kategorilerini Getir');
+                        submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Get Sitemap Categories');
                     });
             });
 
             sitemapLinks.on('click', 'a', function(e) {
                 e.preventDefault();
 
-
                 resultsTbody.empty();
                 processedUrls = 0;
                 errorCount = 0;
                 totalUrls = 0;
-                $('#progress-title').text('Analiz İlerlemesi');
+                $('#progress-title').text('Analysis Progress');
                 updateProgress();
 
                 const sitemapUrl = $(this).data('url');
@@ -503,12 +392,12 @@
                         if (response.success) {
                             populateTable(response.urls);
                         } else {
-                            alert('Hata: ' + response.message);
+                            alert('Error: ' + response.message);
                             resetUI();
                         }
                     })
                     .fail(function() {
-                        alert('Seçilen sitemap yüklenirken bir hata oluştu.');
+                        alert('An error occurred while loading the selected sitemap.');
                         resetUI();
                     });
             });
@@ -519,7 +408,7 @@
                 }).get();
 
                 if (selectedSitemaps.length === 0) {
-                    alert('Lütfen en az bir sitemap kategorisi seçin.');
+                    alert('Please select at least one sitemap category.');
                     return;
                 }
 
@@ -538,7 +427,7 @@
                 totalUrls = 0;
                 queue = [];
                 activeRequests = 0;
-                $('#progress-title').text('Analiz İlerlemesi');
+                $('#progress-title').text('Analysis Progress');
                 updateProgress();
             }
 
@@ -549,10 +438,10 @@
                             if (response.success && response.urls) {
                                 return response.urls;
                             }
-                            return []; // Hata durumunda boş dizi döndür
+                            return [];
                         })
                         .catch(function() {
-                            return []; // AJAX hatasında boş dizi döndür
+                            return [];
                         });
                 });
 
@@ -563,21 +452,20 @@
                     if (uniqueUrls.length > 0) {
                         populateTable(uniqueUrls);
                     } else {
-                        alert('Seçilen sitemap kategorilerinden hiç URL alınamadı.');
+                        alert('No URLs found in the selected sitemap categories.');
                         resetUI();
                     }
                 });
             }
 
             function resetUI() {
-                submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Sitemap Kategorilerini Getir');
+                submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Get Sitemap Categories');
                 progressContainer.addClass('hidden');
                 resultsContainer.addClass('hidden');
                 sitemapSelectionContainer.addClass('hidden');
                 sitemapLinks.empty();
                 resultsTbody.empty();
                 totalUrls = processedUrls = errorCount = 0;
-                $('#sheet-management-container').addClass('hidden');
             }
 
             function displaySitemapSelection(sitemaps) {
@@ -606,11 +494,11 @@
 
                 processedUrls = 0;
                 errorCount = 0;
-                $('#progress-title').text('Analiz İlerlemesi');
+                $('#progress-title').text('Analysis Progress');
 
                 totalUrls = urls.length;
                 if (totalUrls === 0) {
-                    alert('Site haritasında hiç URL bulunamadı.');
+                    alert('No URLs found in the sitemap.');
                     resetUI();
                     return;
                 }
@@ -660,11 +548,11 @@
                         if (response.success) {
                             updateRow(row, response.data);
                         } else {
-                            updateRow(row, { issues: [response.message || 'Bilinmeyen hata'], status_ok: false });
+                            updateRow(row, { issues: [response.message || 'Unknown error'], status_ok: false });
                         }
                     })
                     .fail(function() {
-                        updateRow(row, { issues: ['Sunucu yanıt vermedi veya hata oluştu.'], status_ok: false });
+                        updateRow(row, { issues: ['Server did not respond or an error occurred.'], status_ok: false });
                     })
                     .always(function() {
                         processedUrls++;
@@ -674,129 +562,12 @@
                         if (queue.length > 0) {
                             setTimeout(processQueue, DELAY_BETWEEN_REQUESTS);
                         } else if (activeRequests === 0) {
-                            $('#progress-title').text(`Analiz Tamamlandı! (${totalUrls} sayfa analiz edildi, ${errorCount} hata bulundu)`);
+                            $('#progress-title').text(`Analysis Completed! (${totalUrls} pages analyzed, ${errorCount} issues found)`);
                             submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                            $('#export-form').removeClass('hidden');
-                            $('#sheet-management-container').removeClass('hidden');
+                            // Export kısmı silindiği için burası artık boş
                         }
                     });
             }
-
-            const saveSheetBtn = $('#save_sheet_btn');
-            const sheetNameInput = $('#sheet_name_input');
-            const sheetIdInput = $('#sheet_id_input');
-            const savedSheetsSelect = $('#saved_sheets_select');
-
-            // Sayfa yüklendiğinde kayıtlı sheet'leri getir
-            loadSavedSheets();
-
-            saveSheetBtn.on('click', function() {
-                const sheetName = sheetNameInput.val().trim();
-                const sheetId = sheetIdInput.val().trim();
-
-                if (!sheetName || !sheetId) {
-                    alert('Lütfen E-Tablo adı ve ID girin.');
-                    return;
-                }
-
-                // API'ye kaydetme isteği gönder
-                $.ajax({
-                    url: '{{ path("api_save_sheet_config") }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ name: sheetName, id: sheetId }),
-                    success: function(response) {
-                        if (response.success) {
-                            alert('E-Tablo başarıyla kaydedildi!');
-                            sheetNameInput.val('');
-                            sheetIdInput.val('');
-                            loadSavedSheets(); // Listeyi güncelle
-                        } else {
-                            alert('Hata: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Sunucuya bağlanırken bir hata oluştu.');
-                    }
-                });
-            });
-
-            savedSheetsSelect.on('change', function() {
-                const selectedSheetId = $(this).val();
-                if (selectedSheetId) {
-                    spreadsheetIdInput.val(selectedSheetId).prop('readonly', true);
-                } else {
-                    spreadsheetIdInput.val('').prop('readonly', false);
-                }
-            });
-
-            function loadSavedSheets() {
-                $.ajax({
-                    url: '{{ path("api_get_saved_sheets") }}',
-                    type: 'GET',
-                    success: function(response) {
-                        if (response.success && response.sheets) {
-                            savedSheetsSelect.empty();
-                            savedSheetsSelect.append($('<option>', { value: '', text: 'Kaydedilmiş E-Tablo Seçin' }));
-                            for (const name in response.sheets) {
-                                savedSheetsSelect.append($('<option>', { value: response.sheets[name], text: name }));
-                            }
-                        } else {
-                            console.error('Kayıtlı E-Tablolar yüklenirken hata:', response.message);
-                        }
-                    },
-                    error: function() {
-                        console.error('Kayıtlı E-Tablolar yüklenirken sunucu hatası.');
-                    }
-                });
-            }
-
-            // Sheet ID girildiğinde sekmeleri getir
-            function fetchSheetNames(spreadsheetId) {
-                if (!spreadsheetId) {
-                    tabsNameSelect.html('<option>Önce Sheet ID girin</option>').prop('disabled', true);
-                    return;
-                }
-
-                tabsNameSelect.html('<option>Sekmeler yükleniyor...</option>').prop('disabled', true);
-
-                $.ajax({
-                    url: '{{ path("api_get_sheet_names") }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ spreadsheetId: spreadsheetId }),
-                    success: function(response) {
-                        if (response.success && response.sheets && response.sheets.length > 0) {
-                            tabsNameSelect.empty();
-                            response.sheets.forEach(function(sheetName) {
-                                tabsNameSelect.append($('<option>', { value: sheetName, text: sheetName }));
-                            });
-                            tabsNameSelect.prop('disabled', false);
-                        } else {
-                            tabsNameSelect.html('<option>Sekme bulunamadı</option>').prop('disabled', true);
-                        }
-                    },
-                    error: function() {
-                        tabsNameSelect.html('<option>Sekmeleri alırken hata oluştu</option>').prop('disabled', true);
-                    }
-                });
-            }
-
-            spreadsheetIdInput.on('blur', function() {
-                const spreadsheetId = $(this).val().trim();
-                fetchSheetNames(spreadsheetId);
-            });
-
-            savedSheetsSelect.on('change', function() {
-                const selectedSheetId = $(this).val();
-                if (selectedSheetId) {
-                    spreadsheetIdInput.val(selectedSheetId).prop('readonly', true);
-                    fetchSheetNames(selectedSheetId);
-                } else {
-                    spreadsheetIdInput.val('').prop('readonly', false);
-                    tabsNameSelect.html('<option>Önce Sheet ID girin</option>').prop('disabled', true);
-                }
-            });
 
             function updateRow(row, data) {
                 const escapeHtml = text => $('<div>').text(text).html();
@@ -822,9 +593,8 @@
             function updateProgress() {
                 const percent = totalUrls ? (processedUrls / totalUrls) * 100 : 0;
                 progressBar.val(percent);
-                progressText.text(`${processedUrls}/${totalUrls} URL analiz edildi.`);
+                progressText.text(`${processedUrls}/${totalUrls} URLs analyzed.`);
             }
         });
     </script>
 {% endblock %}
-

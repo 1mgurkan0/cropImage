@@ -20,16 +20,13 @@ final class ImageEditorController extends AbstractController
         return $this->render('base.html.twig');
     }
 
-    #[Route('/goruntu-sikistirma', name: 'app_image_compress', methods: [ 'POST'])]
-    public function compressDownload
-    (
-        Request $request
-    ): Response
+    #[Route('/image-compression', name: 'app_image_compress', methods: [ 'POST'])]
+    public function compressDownload(Request $request): Response
     {
         $files = $request->files->get('image');
 
         if (!$files) {
-            return new Response('Hiç dosya yüklenmedi!', 400);
+            return new Response('No file uploaded!', 400);
         }
 
         if (!is_array($files)) {
@@ -37,7 +34,7 @@ final class ImageEditorController extends AbstractController
         }
 
         if (count($files) > 10) {
-            return new Response('En fazla 10 görsel yükleyebilirsiniz!', 400);
+            return new Response('You can upload a maximum of 10 images!', 400);
         }
 
         $resizeType = $request->request->get('resize_type', 'pixels');
@@ -47,22 +44,22 @@ final class ImageEditorController extends AbstractController
         if ($resizeType === 'pixels') {
             $targetKb = (int)$request->request->get('target_kb', 100);
             if ($targetKb <= 0) {
-                return new Response('Geçersiz hedef boyut!', 400);
+                return new Response('Invalid target size!', 400);
             }
         } elseif ($resizeType === 'percentage') {
             $compressionRatio = (int)$request->request->get('compression_ratio', 90);
             if ($compressionRatio <= 0 || $compressionRatio > 100) {
-                return new Response('Geçersiz sıkıştırma oranı!', 400);
+                return new Response('Invalid compression ratio!', 400);
             }
         } else {
-            return new Response('Geçersiz sıkıştırma türü!', 400);
+            return new Response('Invalid compression type!', 400);
         }
 
         $targetFormat = strtolower($request->request->get('target_format', 'webp'));
         $allowedFormats = ['jpeg', 'jpg', 'png', 'webp'];
 
         if (!in_array($targetFormat, $allowedFormats)) {
-            return new Response('Geçersiz hedef format!', 400);
+            return new Response('Invalid target format!', 400);
         }
 
         $convertedImages = [];
@@ -165,7 +162,7 @@ final class ImageEditorController extends AbstractController
         }
 
         if (count($convertedImages) === 0) {
-            return new Response('Dönüştürülecek geçerli görsel bulunamadı!', 400);
+            return new Response('No valid image found to convert!', 400);
         }
 
         if (count($convertedImages) === 1) {
@@ -180,11 +177,11 @@ final class ImageEditorController extends AbstractController
             ]);
         }
 
-        $zipPath = sys_get_temp_dir() . '/converted_' . uniqid() . '.zip';
+        $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
         $zip = new \ZipArchive();
 
         if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
-            return new Response('Zip dosyası oluşturulamadı!', 500);
+            return new Response('Could not create Zip file!', 500);
         }
 
         foreach ($convertedImages as $img) {
@@ -196,21 +193,19 @@ final class ImageEditorController extends AbstractController
         return new BinaryFileResponse($zipPath, 200, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
-                '; filename="converted_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
+                '; filename="compressed_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
         ]);
     }
 
-    #[Route('/goruntu-sikistirma', name: 'app_image_compress_form', methods: ['GET'])]
+    #[Route('/image-compression', name: 'app_image_compress_form', methods: ['GET'])]
     public function showCompressForm(): Response
     {
         return $this->render('image/compress.html.twig');
     }
 
-    #[Route('/goruntu-donusturme', name: 'app_image_convert', methods: ['GET', 'POST'])]
-    public function convert
-    (
-        Request $request
-    ): Response
+
+    #[Route('/image-conversion', name: 'app_image_convert', methods: ['GET', 'POST'])]
+    public function convert(Request $request): Response
     {
         if ($request->isMethod('GET')) {
             return $this->render('image/convert.html.twig');
@@ -220,7 +215,7 @@ final class ImageEditorController extends AbstractController
         $targetFormat = strtolower($request->request->get('format') ?? '');
 
         if (!$files || !is_array($files) || !in_array($targetFormat, ['webp', 'jpeg', 'jpg', 'png'])) {
-            return new Response('Geçersiz dosya(lar) veya format!', 400);
+            return new Response('Invalid file(s) or format!', 400);
         }
 
         $convertedImages = [];
@@ -295,7 +290,7 @@ final class ImageEditorController extends AbstractController
         }
 
         if (count($convertedImages) === 0) {
-            return new Response('Hiçbir dosya dönüştürülemedi!', 400);
+            return new Response('No files could be converted!', 400);
         }
 
         if (count($convertedImages) === 1) {
@@ -303,10 +298,10 @@ final class ImageEditorController extends AbstractController
             return $this->file($image['path'], $image['name']);
         }
 
-        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_converted_' . uniqid() . '.zip';
+        $zipPath = sys_get_temp_dir() . '/converted_images_' . uniqid() . '.zip';
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
-            return new Response('ZIP dosyası oluşturulamadı!', 500);
+            return new Response('Could not create ZIP file!', 500);
         }
 
         foreach ($convertedImages as $image) {
@@ -322,32 +317,7 @@ final class ImageEditorController extends AbstractController
         ]);
     }
 
-//    #[Route('/arkaplan-kaldırma' , name:'app_remove_background', methods: ['GET' , 'POST'])]
-//    public function removeBackground(Request $request): Response{
-//        if ($request->isMethod('GET')) {
-//            return $this->render('image/remove_background.html.twig');
-//        }
-//        $files = $request->files->get('images');
-//        $targetFormat = strtolower($request->request->get('format') ?? '');
-//
-//        if (!$files || !is_array($files) || !in_array($targetFormat, ['webp', 'jpeg', 'jpg', 'png'])) {
-//            return new Response('Geçersiz dosya(lar) veya format!', 400);
-//        }
-//
-//        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_converted'. uniqid() . '.zip';
-//        $zip = new ZipArchive();
-//        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
-//            return new Response('ZIP dosyası oluşturulamadı!', 500);
-//        }
-//        foreach ($files as $file) {
-//            $imageData = file_get_contents($file->getPathname());
-//
-//
-//        }
-//        return $this->render('image/remove_background.html.twig');
-//    }
-
-    #[Route('/goruntu-kirpma', name: 'app_image_crop', methods: ['GET', 'POST'])]
+    #[Route('/image-crop', name: 'app_image_crop', methods: ['GET', 'POST'])]
     public function crop(Request $request): Response
     {
         if ($request->isMethod('GET')) {
@@ -357,25 +327,25 @@ final class ImageEditorController extends AbstractController
         $base64Data = $request->request->get('croppedImage');
 
         if (!$base64Data || !preg_match('#^data:image/(\w+);base64,#i', $base64Data, $matches)) {
-            return new Response('Geçersiz görsel verisi!', 400);
+            return new Response('Invalid image data!', 400);
         }
 
         $extension = strtolower($matches[1]);
         $validExtensions = ['jpeg', 'jpg', 'png', 'webp'];
 
         if (!in_array($extension, $validExtensions)) {
-            return new Response("Desteklenmeyen format: .$extension", 400);
+            return new Response("Unsupported format: .$extension", 400);
         }
 
         $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Data));
 
         if (!$imageData) {
-            return new Response('Base64 decode hatası!', 400);
+            return new Response('Base64 decode error!', 400);
         }
 
-        $image = imagecreatefromstring($imageData);
+        $image = \imagecreatefromstring($imageData);
         if (!$image) {
-            return new Response('Görsel oluşturulamadı!', 400);
+            return new Response('Image could not be created!', 400);
         }
 
         $imageName = 'cropped_' . uniqid() . '.' . $extension;
@@ -414,13 +384,34 @@ final class ImageEditorController extends AbstractController
         return $response;
     }
 
-    #[Route('/karakter-sayaci', name: 'app_character_counter', methods: ['GET', 'POST'])]
-    public function counter(Request $request): Response
+    #[Route('/character-counter', name: 'app_character_counter')]
+    public function counter(): Response
     {
-        if ($request->isMethod('GET')) {
-            return $this->render('image/counter.html.twig');
-        }
-
         return $this->render('image/counter.html.twig');
     }
+
+    //    #[Route('/arkaplan-kaldırma' , name:'app_remove_background', methods: ['GET' , 'POST'])]
+//    public function removeBackground(Request $request): Response{
+//        if ($request->isMethod('GET')) {
+//            return $this->render('image/remove_background.html.twig');
+//        }
+//        $files = $request->files->get('images');
+//        $targetFormat = strtolower($request->request->get('format') ?? '');
+//
+//        if (!$files || !is_array($files) || !in_array($targetFormat, ['webp', 'jpeg', 'jpg', 'png'])) {
+//            return new Response('Geçersiz dosya(lar) veya format!', 400);
+//        }
+//
+//        $zipPath = sys_get_temp_dir() . '/crop-kalitehost_converted'. uniqid() . '.zip';
+//        $zip = new ZipArchive();
+//        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+//            return new Response('ZIP dosyası oluşturulamadı!', 500);
+//        }
+//        foreach ($files as $file) {
+//            $imageData = file_get_contents($file->getPathname());
+//
+//
+//        }
+//        return $this->render('image/remove_background.html.twig');
+//    }
 }
