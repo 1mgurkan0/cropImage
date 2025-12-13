@@ -159,6 +159,11 @@
         <form method="POST" action="{{ path('app_image_convert') }}" enctype="multipart/form-data">
             <h1 class="card-title text-center mb-4">Image Converter</h1>
 
+            <ul class="intro-text lead mb-5 text-start">
+                <li>You can select up to 10 images from your device or drag and drop images into the drop area.</li>
+                <li>Selected images must be a maximum of 10 MB.</li>
+            </ul>
+
             <div class="mb-3">
                 <label for="image-upload" class="form-label fw-bold text-muted">Select Images (Multiple)</label>
                 <div id="drop-area" class="file-upload-area p-5 text-center">

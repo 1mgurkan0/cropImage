@@ -20,11 +20,12 @@ final class ImageEditorController extends AbstractController
         return $this->render('base.html.twig');
     }
 
-    #[Route('/image-compression', name: 'app_image_compress', methods: [ 'POST'])]
+    #[Route('/image-compression', name: 'app_image_compress', methods: ['POST'])]
     public function compressDownload(Request $request): Response
     {
         $files = $request->files->get('image');
 
+        // 1. Basic Validations (English)
         if (!$files) {
             return new Response('No file uploaded!', 400);
         }
@@ -37,24 +38,14 @@ final class ImageEditorController extends AbstractController
             return new Response('You can upload a maximum of 10 images!', 400);
         }
 
-        $resizeType = $request->request->get('resize_type', 'pixels');
-        $targetKb = null;
-        $compressionRatio = null;
+        // 2. Get Target Size (KB) - Percentage logic removed
+        $targetKb = (int)$request->request->get('target_kb', 100);
 
-        if ($resizeType === 'pixels') {
-            $targetKb = (int)$request->request->get('target_kb', 100);
-            if ($targetKb <= 0) {
-                return new Response('Invalid target size!', 400);
-            }
-        } elseif ($resizeType === 'percentage') {
-            $compressionRatio = (int)$request->request->get('compression_ratio', 90);
-            if ($compressionRatio <= 0 || $compressionRatio > 100) {
-                return new Response('Invalid compression ratio!', 400);
-            }
-        } else {
-            return new Response('Invalid compression type!', 400);
+        if ($targetKb <= 0) {
+            return new Response('Invalid target size! Please enter a value greater than 0.', 400);
         }
 
+        // 3. Get Target Format
         $targetFormat = strtolower($request->request->get('target_format', 'webp'));
         $allowedFormats = ['jpeg', 'jpg', 'png', 'webp'];
 
@@ -64,6 +55,7 @@ final class ImageEditorController extends AbstractController
 
         $convertedImages = [];
 
+        // 4. Processing Loop
         foreach ($files as $file) {
             if (!$file->isValid()) {
                 continue;
@@ -81,6 +73,7 @@ final class ImageEditorController extends AbstractController
                 continue;
             }
 
+            // Fix orientation/truecolor issues
             if (!imageistruecolor($image)) {
                 $width = imagesx($image);
                 $height = imagesy($image);
@@ -90,14 +83,13 @@ final class ImageEditorController extends AbstractController
                 $image = $tempImage;
             }
 
-            $originalSizeKb = filesize($file->getPathname()) / 1024;
-            $targetSizeKb = $targetKb ?? ($originalSizeKb * ($compressionRatio / 100));
-
+            // Compression Loop Variables
             $quality = 95;
             $minQuality = 10;
-            $step = 10;
+            $step = 5;
             $compressedData = null;
 
+            // Loop until file size is <= targetKb OR quality reaches minimum
             do {
                 ob_start();
                 switch ($targetFormat) {
@@ -108,19 +100,14 @@ final class ImageEditorController extends AbstractController
                         break;
 
                     case 'png':
+                        // Map 0-100 quality to PNG's 0-9 compression level
+                        // (PNG: 0=No compression, 9=Max compression)
                         $pngQuality = (int)round((9 - ($quality / 100 * 9)));
                         $pngQuality = max(0, min(9, $pngQuality));
 
-                        $width = imagesx($image);
-                        $height = imagesy($image);
-                        $tempImage = imagecreatetruecolor($width, $height);
-                        imagealphablending($tempImage, false);
-                        imagesavealpha($tempImage, true);
-                        $transparent = imagecolorallocatealpha($tempImage, 0, 0, 0, 127);
-                        imagefill($tempImage, 0, 0, $transparent);
-                        imagecopy($tempImage, $image, 0, 0, 0, 0, $width, $height);
-                        imagedestroy($image);
-                        $image = $tempImage;
+                        // Preserve transparency
+                        imagealphablending($image, false);
+                        imagesavealpha($image, true);
 
                         imagepng($image, null, $pngQuality);
                         $ext = 'png';
@@ -141,7 +128,7 @@ final class ImageEditorController extends AbstractController
                 $compressedData = ob_get_clean();
                 $sizeKb = strlen($compressedData) / 1024;
 
-                if ($sizeKb <= $targetSizeKb || $quality <= $minQuality) {
+                if ($sizeKb <= $targetKb || $quality <= $minQuality) {
                     break;
                 }
 
@@ -161,10 +148,13 @@ final class ImageEditorController extends AbstractController
             ];
         }
 
+        // 5. Download Logic (English Filenames)
+
         if (count($convertedImages) === 0) {
-            return new Response('No valid image found to convert!', 400);
+            return new Response('No valid images found to compress!', 400);
         }
 
+        // Single file download
         if (count($convertedImages) === 1) {
             $img = $convertedImages[0];
 
@@ -177,6 +167,7 @@ final class ImageEditorController extends AbstractController
             ]);
         }
 
+        // Zip file download
         $zipPath = sys_get_temp_dir() . '/compressed_' . uniqid() . '.zip';
         $zip = new \ZipArchive();
 
@@ -193,7 +184,7 @@ final class ImageEditorController extends AbstractController
         return new BinaryFileResponse($zipPath, 200, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => ResponseHeaderBag::DISPOSITION_ATTACHMENT .
-                '; filename="compressed_images_' . (new \DateTime())->format('Y-m-d_H.i.s') . '.zip"',
+                '; filename="compressed_images_' . (new \DateTime())->format('Y-m-d_H-i-s') . '.zip"',
         ]);
     }
 

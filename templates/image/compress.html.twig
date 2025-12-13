@@ -183,31 +183,9 @@
 
             <div id="preview-container" class="preview-container"></div>
 
-            <div class="d-flex justify-content-around mb-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="resize_type" id="resize_pixels" value="pixels" checked>
-                    <label class="form-check-label" for="resize_pixels">
-                        Target Size (KB)
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="resize_type" id="resize_percentage" value="percentage">
-                    <label class="form-check-label" for="resize_percentage">
-                        Target Size (%)
-                    </label>
-                </div>
-            </div>
-
             <div id="pixels_kb_container" class="mb-3">
                 <label for="target_kb" class="form-label">Target File Size (KB)</label>
                 <input type="number" class="form-control" id="target_kb" name="target_kb" value="100" min="10" max="1000">
-            </div>
-
-            <div id="percentage_range_container" class="mb-3" style="display:none;">
-                <label for="compression_ratio" class="form-label ">
-                    Target File Size <span id="quality_value">90%</span>
-                </label>
-                <input type="range" class="form-range" id="compression_ratio" name="compression_ratio" min="1" max="100" value="90">
             </div>
 
             <div class="mb-3">

@@ -1,13 +1,14 @@
 <?php
 
-// src/Service/SeoAnalyzerService.php
 namespace App\Service;
 
 use DOMDocument;
 use DOMXPath;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use SimpleXMLElement;
-use Google\Service\Sheets;
-use Google\Client as GoogleClient;
 
 class SeoAnalyzerService
 {
@@ -43,10 +44,8 @@ class SeoAnalyzerService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_TIMEOUT => 30, // 120 çok uzun, 30 idealdir
-            // Otomatik GZIP çözme (Çok önemli)
+            CURLOPT_TIMEOUT => 30,
             CURLOPT_ENCODING => '',
-            // Daha gerçekçi bir tarayıcı taklidi
             CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             CURLOPT_HTTPHEADER => [
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -57,12 +56,10 @@ class SeoAnalyzerService
 
         $data = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch); // Hata varsa görelim
+        $curlError = curl_error($ch);
         curl_close($ch);
 
-        // Boş veri veya hata durumunu kontrol et
         if ($data === false || $httpCode >= 400) {
-            // Debug için error log'a yazabilirsin: error_log("CURL Error: $curlError URL: $url Code: $httpCode");
             return ['html' => false, 'http_code' => $httpCode];
         }
 
@@ -71,10 +68,8 @@ class SeoAnalyzerService
 
     public function getSitemapFromDomain(string $inputUrl): string|false
     {
-        // 1. URL'i parçala ve kök dizini (Root Domain) bul
         $parsed = parse_url($inputUrl);
 
-        // Eğer http/https girilmemişse varsayılan ekle
         if (!isset($parsed['scheme'])) {
             $inputUrl = 'https://' . $inputUrl;
             $parsed = parse_url($inputUrl);
@@ -89,18 +84,15 @@ class SeoAnalyzerService
 
         $baseUrl = $scheme . '://' . $host;
 
-        // 2. Robots.txt'yi kontrol et
         $robotsUrl = $baseUrl . '/robots.txt';
         $fetch = $this->fetchContent($robotsUrl);
 
         if ($fetch['html'] !== false) {
-            // Case-insensitive (i) ve multiline (m) arama yap
             if (preg_match('/^Sitemap:\s*(.*)$/im', $fetch['html'], $matches)) {
                 return trim($matches[1]);
             }
         }
 
-        // 3. Robots.txt'de yoksa veya robots.txt açılmadıysa standart yolları dene
         $commonPaths = [
             '/sitemap_index.xml',
             '/sitemap.xml',
@@ -109,11 +101,8 @@ class SeoAnalyzerService
 
         foreach ($commonPaths as $path) {
             $tryUrl = $baseUrl . $path;
-            // Sadece başlık (HEAD) kontrolü yapıp dosya var mı bakabiliriz ama
-            // senin yapında direkt indirip bakmak daha garanti.
             $check = $this->fetchContent($tryUrl);
             if ($check['http_code'] === 200 && !empty($check['html'])) {
-                // İçerik gerçekten XML mi diye basitçe bak
                 if (str_contains($check['html'], '<?xml') || str_contains($check['html'], '<urlset') || str_contains($check['html'], '<sitemapindex')) {
                     return $tryUrl;
                 }
@@ -142,7 +131,6 @@ class SeoAnalyzerService
             $xml = new SimpleXMLElement($content, LIBXML_NOCDATA);
             $urls = [];
 
-            // Check for sitemap index
             if (isset($xml->sitemap)) {
                 foreach ($xml->sitemap as $sitemapNode) {
                     $urls[] = (string)$sitemapNode->loc;
@@ -167,6 +155,7 @@ class SeoAnalyzerService
     {
         $fetch = $this->fetchContent($url);
         $html = $fetch['html'];
+
         $report = [
             'url' => $url,
             'title' => 'N/A',
@@ -177,42 +166,175 @@ class SeoAnalyzerService
         ];
 
         if ($html === false) {
-            $report['issues'][] = 'Sayfa alınamadı (HTTP ' . $fetch['http_code'] . ' hatası).';
+            $report['issues'][] = 'Critical: Page could not be retrieved (HTTP ' . $fetch['http_code'] . ' error).';
             return ['success' => true, 'data' => $report];
         }
 
         $meta = $this->extractMetaData($html);
         $report = array_merge($report, $meta);
 
-        if (mb_strlen($meta['title']) > 60) {
-            $report['issues'][] = 'Title 60 karakterden uzun (' . mb_strlen($meta['title']) . ' karakter).';
-        }
-        if (mb_strlen($meta['title']) < 50) {
-            $report['issues'][] = 'Title 50 karakterden kisa (' . mb_strlen($meta['title']) . ' karakter).';
-        }
         if (empty($meta['title'])) {
-            $report['issues'][] = 'Title etiketi bos veya bulunamadi.';
+            $report['issues'][] = 'Critical: Title tag is missing or empty.';
+        } else {
+            $titleLen = mb_strlen($meta['title']);
+
+            if ($titleLen < 30) {
+                $report['issues'][] = 'Critical: Title is too short (' . $titleLen . ' chars). Minimum 30 required for relevance.';
+            } elseif ($titleLen >= 30 && $titleLen < 50) {
+                $report['issues'][] = 'Warning: Title is slightly short (' . $titleLen . ' chars). Recommended: 50-60 characters.';
+            } elseif ($titleLen >= 50 && $titleLen <= 60) {
+            } elseif ($titleLen > 60 && $titleLen <= 75) {
+                $report['issues'][] = 'Warning: Title is slightly long (' . $titleLen . ' chars). It may be truncated on some devices.';
+            } else {
+                $report['issues'][] = 'Critical: Title is too long (' . $titleLen . ' chars). It will be truncated in search results.';
+            }
         }
 
         if (empty($meta['description'])) {
-            $report['issues'][] = 'Meta description bulunamadı.';
+            $report['issues'][] = 'Critical: Meta description is missing.';
         } else {
             $descLen = mb_strlen($meta['description']);
+
             if ($descLen < 70) {
-                $report['issues'][] = 'Description 70 karakterden kisa (' . $descLen . ' karakter).';
-            }
-            if ($descLen > 160) {
-                $report['issues'][] = 'Description 160 karakterden uzun (' . $descLen . ' karakter).';
+                $report['issues'][] = 'Warning: Meta description is too short (' . $descLen . ' chars). Recommended: 120-160 characters.';
+            } elseif ($descLen >= 70 && $descLen < 120) {
+                $report['issues'][] = 'Warning: Meta description is slightly short (' . $descLen . ' chars). Use this space to pitch your content.';
+            } elseif ($descLen >= 120 && $descLen <= 160) {
+            } else {
+                $report['issues'][] = 'Warning: Meta description is too long (' . $descLen . ' chars). It will be truncated (~160 chars max).';
             }
         }
 
         if (empty($meta['h1'])) {
-            $report['issues'][] = 'H1 etiketi bulunamadı.';
+            $report['issues'][] = 'Critical: H1 tag is missing. Every page should have one main heading.';
+        } else {
+
+            $h1Len = mb_strlen($meta['h1']);
+            if ($h1Len > 70) {
+                $report['issues'][] = 'Warning: H1 tag is quite long (' . $h1Len . ' chars). Ensure it is readable and concise.';
+            }
         }
 
         $report['status_ok'] = count($report['issues']) === 0;
 
         return ['success' => true, 'data' => $report];
+    }
+
+    public function generateExcelSpreadsheet(array $rows): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Segoe UI');
+        $spreadsheet->getDefaultStyle()->getFont()->setSize(10);
+
+        $sheet->setShowGridlines(false);
+
+        $headers = ['URL', 'Title', 'Description', 'H1', 'Status', 'Issues'];
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+                'size' => 11
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF5D67E6']
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => Border::BORDER_MEDIUM,
+                    'color' => ['argb' => 'FF3B4396'],
+                ],
+            ],
+        ];
+
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(40);
+
+        $rowNumber = 2;
+
+        $borderStyle = [
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FFD9D9D9'],
+                ],
+            ],
+        ];
+
+        foreach ($rows as $row) {
+            $sheet->setCellValue('A' . $rowNumber, $row['url'] ?? '');
+            $sheet->setCellValue('B' . $rowNumber, $row['title'] ?? '');
+            $sheet->setCellValue('C' . $rowNumber, $row['description'] ?? '');
+            $sheet->setCellValue('D' . $rowNumber, $row['h1'] ?? '');
+
+            $issues = $row['issues'] ?? [];
+            $issuesText = is_array($issues) ? implode("\n", $issues) : (string)$issues;
+
+            if (!empty($issuesText)) {
+                $issuesText .= "\n ";
+            }
+
+            $sheet->setCellValue('F' . $rowNumber, $issuesText);
+
+            $statusText = 'OK';
+            $statusColor = 'FF28A745';
+            $rowBgColor = null;
+
+            if (!empty($issues)) {
+                if (str_contains($issuesText, 'Critical')) {
+                    $statusText = 'CRITICAL';
+                    $statusColor = 'FFDC3545';
+                    $rowBgColor  = 'FFFFF5F5';
+                } elseif (str_contains($issuesText, 'Warning')) {
+                    $statusText = 'WARNING';
+                    $statusColor = 'F39C12';
+                    $rowBgColor  = 'FFFFFBF0';
+                }
+            }
+            $sheet->setCellValue('E' . $rowNumber, $statusText);
+
+
+            if ($rowBgColor) {
+                $sheet->getStyle('A' . $rowNumber . ':F' . $rowNumber)
+                    ->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()
+                    ->setARGB($rowBgColor);
+            }
+
+            $sheet->getStyle('A' . $rowNumber . ':F' . $rowNumber)->applyFromArray($borderStyle);
+
+            $sheet->getStyle('A'.$rowNumber.':F'.$rowNumber)
+                ->getAlignment()
+                ->setVertical(Alignment::VERTICAL_TOP)
+                ->setIndent(1);
+
+            $sheet->getStyle('F'.$rowNumber)->getAlignment()->setWrapText(true);
+            $sheet->getStyle('E'.$rowNumber)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->getStyle('E' . $rowNumber)->getFont()->getColor()->setARGB($statusColor);
+            $sheet->getStyle('E' . $rowNumber)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $rowNumber)->getFont()->getColor()->setARGB('FF5D67E6');
+
+            $rowNumber++;
+        }
+
+        $sheet->getColumnDimension('A')->setWidth(50);
+        $sheet->getColumnDimension('B')->setWidth(40);
+        $sheet->getColumnDimension('C')->setWidth(45);
+        $sheet->getColumnDimension('D')->setWidth(25);
+        $sheet->getColumnDimension('E')->setWidth(15);
+        $sheet->getColumnDimension('F')->setWidth(80);
+
+        return $spreadsheet;
     }
 
     public function getBrokenLinksForUrl(string $url): array

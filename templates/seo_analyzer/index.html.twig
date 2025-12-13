@@ -12,6 +12,12 @@
             --border-color: #e0e6ed;
             --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
             --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --status-critical-bg: rgba(220, 53, 69, 0.1);
+            --status-warning-bg: rgba(255, 193, 7, 0.15);
+            --status-success-bg: rgba(40, 167, 69, 0.1);
+            --text-critical: #dc3545;
+            --text-warning: #b45309;
+            --text-success: #198754;
         }
         html,body {
             height: 100%;
@@ -20,7 +26,7 @@
             padding-bottom: 2rem;
         }
         .hidden {
-            display: none;
+            display: none !important;
         }
         #progress-container {
             margin-top: 1.5rem;
@@ -31,54 +37,81 @@
         }
         #results-container th, #results-container td {
             word-wrap: break-word;
-            color: #FFFFFF;
+            color: #000000;
             border-color: var(--border-color);
+            font-size:15px;
+            vertical-align: top;
+            padding: 12px;
         }
         #results-container th {
             background-color: var(--primary-color);
+            color: #ffffff;
         }
         #results-container td.status {
-            width: 40px;
+            width: 70px;
             text-align: center;
+            vertical-align: top;
+            font-size: 1.2rem;
         }
         #results-container td.url {
             width: 25%;
         }
+
         #results-container td.issues ul {
             margin: 0;
-            padding-left: 1rem;
+            padding-left: 1.2rem;
         }
         #results-container td.issues ul li {
-            color: #000000;
-            text-decoration: underline;
+            position: relative;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
-        .status-icon {
-            font-size: 1.2rem;
-            color: var(--primary-color);
+
+        .issue-item-critical {
+            color: var(--text-critical);
+            font-weight: 600;
         }
-        .status .loader {
+        .issue-item-critical::before {
+            color: var(--text-critical);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .issue-item-warning {
+            color: var(--text-warning);
+        }
+        .issue-item-warning::before {
+            color: var(--text-warning);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .loader {
             display: inline-block;
             width: 1rem;
             height: 1rem;
-            border: 2px solid currentColor;
+            border: 2px solid var(--primary-color);
             border-right-color: transparent;
             border-radius: 50%;
             animation: spin .75s linear infinite;
-            color: var(--primary-color);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
         tr[data-status="processed"] {
-            background-color: rgba(68, 189, 133, 0.08);
+            background-color: var(--status-success-bg);
         }
-        tr[data-status="error"] {
-            background-color: rgba(239, 93, 93, 0.1);
+        tr[data-status="critical"] {
+            background-color: var(--status-critical-bg);
         }
-        .status-ok {
-            color: #44bd85;
+        tr[data-status="warning"] {
+            background-color: var(--status-warning-bg);
         }
-        .status-error {
-            color: #ef5d5d;
-        }
+
         h1, h2, h3 {
             color: var(--text-color);
         }
@@ -87,9 +120,11 @@
         }
         a {
             color: var(--primary-color);
+            text-decoration: none;
         }
         a:hover {
             color: #3871c2;
+            text-decoration: underline;
         }
 
         .converter-card {
@@ -99,11 +134,6 @@
             padding: 2.5rem;
             border: none;
         }
-        .card-title {
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-        }
         .feature-card {
             background-color: var(--card-bg-color);
             border-radius: 20px;
@@ -112,6 +142,7 @@
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
             text-decoration: none;
+            height: 100%;
         }
         .feature-card:hover {
             transform: translateY(-10px);
@@ -138,10 +169,16 @@
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
             color: #ffffff;
+            width: 100%;
         }
         .submit-btn:hover {
             background-color: #3871c2;
             transform: translateY(-2px);
+        }
+        .submit-btn:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
         }
 
         #sitemap-selection-container {
@@ -151,34 +188,22 @@
             border-radius: 10px;
             border: 1px solid var(--border-color);
         }
-
-        #sitemap-selection-container h4 {
-            color: var(--text-color);
-            margin-bottom: 1rem;
-        }
-
-        #sitemap-selection-container .row .col {
-            background-color: var(--card-bg-color);
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: var(--shadow-light);
-            border: 1px solid var(--border-color);
-        }
-
-        #sitemap-links a {
-            display: inline-block;
+        #sitemap-links .form-check {
             background-color: var(--primary-color);
-            color: #ffffff;
-            padding: 0.5rem 1rem;
             border-radius: 8px;
-            text-decoration: none;
-            transition: background-color 0.3s ease;
-            margin-right: 10px;
             margin-bottom: 10px;
+            padding: 10px 15px;
         }
-
-        #sitemap-links a:hover {
-            background-color: #3871c2;
+        #export-excel-btn {
+            background-color: #217346 !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            max-width: 300px;
+        }
+        #export-excel-btn:hover {
+            background-color: #1a5c38 !important;
         }
     </style>
 {% endblock %}
@@ -186,43 +211,47 @@
 {% block body %}
     <main class="container">
         <div class="card p-4 shadow-lg converter-card">
-            <hgroup>
-                <h1>Async SEO Analysis Tool</h1>
+            <hgroup class="mb-4">
+                <h1 class="mb-2">Async SEO Analysis Tool</h1>
                 <h2>Analyze pages in the sitemap in real-time.</h2>
             </hgroup>
 
-            <form id="domain-form" style="
-            background-color: var(--card-bg-color);
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: var(--shadow-light);
-            border: 1px solid var(--border-color);">
-                <label for="domain_url">Domain URL</label>
-                <input type="url" id="domain_url" name="domain_url" placeholder="https://example.com" style="background-color: var(--card-bg-color); color:#000000" required >
-                <small>Please enter the main domain address. The system will automatically find the sitemap from robots.txt.</small>
+            <form id="domain-form" style="background-color: var(--card-bg-color); border-radius: 10px; padding: 1.5rem; box-shadow: var(--shadow-light); border: 1px solid var(--border-color);">
+                <label for="domain_url" class="form-label fw-bold">Domain URL</label>
+                <input type="url" id="domain_url" name="domain_url" class="form-control mb-2" placeholder="https://example.com" required style="background-color: #fff; color: #000;">
+                <small class="text-muted d-block mt-3 mb-3">Please enter the main domain address. The system will automatically find the sitemap from robots.txt.</small>
                 <button type="submit" id="submit-btn" class="submit-btn">Get Sitemap Categories</button>
             </form>
 
-            <div id="sitemap-selection-container" class="hidden ms-3 me-3 ">
-                <h4>Select Sitemap Category to Analyze</h4>
+            <div id="sitemap-selection-container" class="hidden mt-4">
+                <h4 class="mb-3">Select Sitemap Category to Analyze</h4>
                 <div class="row">
-                    <div class="col py-3 px-3" id="sitemap-links"></div>
+                    <div class="col-12" id="sitemap-links"></div>
                 </div>
-                <button id="analyze-selected-btn" class="col-12 submit-btn hidden mt-3">Analyze Selected</button>
+                <button id="analyze-selected-btn" class="submit-btn mt-3">Analyze Selected</button>
             </div>
 
             <div id="progress-container" class="hidden">
                 <h3 id="progress-title">Analysis Progress</h3>
-                <progress id="progress-bar" value="0" max="100"></progress>
-                <p id="progress-text" class="text-black">0/0 URLs analyzed.</p>
+                <progress id="progress-bar" value="0" max="100" class="w-100"></progress>
+                <p id="progress-text" class="text-dark fw-bold">0/0 URLs analyzed.</p>
             </div>
 
-            <div id="results-container" class="hidden " >
+            <div id="export-container" class="hidden mt-4 text-center">
+                <button id="export-excel-btn" class="submit-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-excel-fill" viewBox="0 0 16 16">
+                        <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 11 3.293L9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM5.884 6.68 8 9.219l2.116-2.54a.5.5 0 1 1 .768.641L8.651 10l2.233 2.68a.5.5 0 0 1-.768.64L8 10.781l-2.116 2.54a.5.5 0 0 1-.768-.641L7.349 10 5.116 7.32a.5.5 0 1 1 .768-.64z"/>
+                    </svg>
+                    Download Report as Excel
+                </button>
+            </div>
+
+            <div id="results-container" class="hidden mt-4">
                 <hr>
                 <h3>Analysis Results</h3>
-                <div class="overflow-auto">
-                    <table>
-                        <thead>
+                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-bordered">
+                        <thead style="position: sticky; top: 0; z-index: 1;">
                         <tr>
                             <th class="status">Status</th>
                             <th class="url">URL</th>
@@ -240,74 +269,60 @@
         </div>
     </main>
 
-    <div class="container main-container text-center py-4">
+    <div class="container main-container text-center py-5">
         <div class="row g-4">
             <div class="col-md-4">
                 <a href="{{ path('app_image_compress') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
-                    <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
-                        </svg>
-                    </span>
+                    <div class="card p-4 feature-card d-flex flex-column align-items-center justify-content-center">
+                        <span class="card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrows-collapse" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 1 0 0 1 0 1h-13A.5.5 0 0 1 1 8m13-3.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1 0-1h13a.5.5 0 0 1 .5.5m-13 7a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/></svg>
+                        </span>
                         <h2 class="card-title-link mt-3 text-center">Image Compress</h2>
-                        <p class="card-text text-center mt-2">Reduce file size and gain speed. Compress without losing quality.</p>
+                        <p class="card-text text-center mt-2">Reduce file size and gain speed.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="{{ path('app_image_convert') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
-                    <span class="card-icon">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16">
-                            <path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/>
-                        </svg>
-
-                    </span>
+                    <div class="card p-4 feature-card d-flex flex-column align-items-center justify-content-center">
+                        <span class="card-icon">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16"><path d="M13 10H3c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1zM3 3v6h10V3H3zm12-2H4c-.55 0-1 .45-1 1v1h11c.55 0 1 .45 1 1v11h1c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>
+                        </span>
                         <h2 class="card-title-link mt-3">Image Converter</h2>
-                        <p class="card-text text-center mt-2">Fast and easy conversion to different formats.</p>
+                        <p class="card-text text-center mt-2">Convert between JPG, PNG, WebP.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="{{ path('app_image_crop') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
-                    <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
-                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/>
-                        </svg>
-                    </span>
+                    <div class="card p-4 feature-card d-flex flex-column align-items-center justify-content-center">
+                        <span class="card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9A.25.25 0 0 1 13.52 10.5h-3.932a.25.25 0 0 1-.192-.41l1.92-2.9a.25.25 0 0 1 .192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m7.068 0h3.932a.25.25 0 0 0 .192-.41L13.52 4.6A.25.25 0 0 0 13.52 4.6L11.6 1.7A.25.25 0 0 0 11.408 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L7.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09m-7.068 0h3.932a.25.25 0 0 0 .192-.41L6.48 4.6A.25.25 0 0 0 6.48 4.6L4.56 1.7A.25.25 0 0 0 4.368 1.5h-3.932a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0-.192.41L1.76 10.5a.25.25 0 0 0 .192.41h3.932a.25.25 0 0 0 .192-.41l-1.92-2.9a.25.25 0 0 0-.192-.09"/></svg>
+                        </span>
                         <h2 class="card-title-link mt-3 text-center">Image Crop</h2>
-                        <p class="card-text text-center mt-2">Highlight the area you want. Crop unnecessary details.</p>
+                        <p class="card-text text-center mt-2">Highlight the area you want.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="{{ path('broken_link_checker') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
-                    <span class="card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-link-45deg" viewBox="0 0 16 16">
-                            <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
-                            <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
-                        </svg>
-                    </span>
+                    <div class="card p-4 feature-card d-flex flex-column align-items-center justify-content-center">
+                        <span class="card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-link-45deg" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg>
+                        </span>
                         <h2 class="card-title-link mt-3 text-center">Broken Link Checker</h2>
-                        <p class="card-text text-center mt-2">Find 404s and other broken links on a page.</p>
+                        <p class="card-text text-center mt-2">Find 404s and broken links.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="{{ path('app_character_counter') }}" class="text-decoration-none">
-                    <div class="card p-5 feature-card h-100 d-flex flex-column align-items-center justify-content-center">
+                    <div class="card p-4 feature-card d-flex flex-column align-items-center justify-content-center">
             <span class="card-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-journal-text" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M5 8h6v1H5V8zm0-2h6v1H5V6z"/>
-                    <path d="M3 2.5v11a.5.5 0 0 0 .5.5H13v1H3.5A1.5 1.5 0 0 1 2 13.5v-11A1.5 1.5 0 0 1 3.5 1H13v1H3.5a.5.5 0 0 0-.5.5z"/>
-                    <path d="M14 1.5a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-journal-text" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5 8h6v1H5V8zm0-2h6v1H5V6z"/><path d="M3 2.5v11a.5.5 0 0 0 .5.5H13v1H3.5A1.5 1.5 0 0 1 2 13.5v-11A1.5 1.5 0 0 1 3.5 1H13v1H3.5a.5.5 0 0 0-.5.5z"/><path d="M14 1.5a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/></svg>
             </span>
                         <h2 class="card-title-link mt-3 text-center">Text Counter</h2>
-                        <p class="card-text text-center mt-2">Easily learn the character and word count in your text.</p>
+                        <p class="card-text text-center mt-2">Count words and characters.</p>
                     </div>
                 </a>
             </div>
@@ -329,18 +344,73 @@
             const resultsContainer = $('#results-container');
             const resultsTbody = $('#results-tbody');
             const analyzeSelectedBtn = $('#analyze-selected-btn');
-
+            const exportContainer = $('#export-container');
+            const exportExcelBtn = $('#export-excel-btn');
             let totalUrls = 0, processedUrls = 0, errorCount = 0;
             const CONCURRENT_REQUESTS = 1;
             const DELAY_BETWEEN_REQUESTS = 250;
             let activeRequests = 0;
             let queue = [];
-            let currentDomain = '';
+
+            const excelSvgIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-excel-fill" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 5px;"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 11 3.293L9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM5.884 6.68 8 9.219l2.116-2.54a.5.5 0 1 1 .768.641L8.651 10l2.233 2.68a.5.5 0 0 1-.768.64L8 10.781l-2.116 2.54a.5.5 0 0 1-.768-.641L7.349 10 5.116 7.32a.5.5 0 1 1 .768-.64z"/></svg>';
+
+            exportExcelBtn.on('click', function() {
+                const rows = [];
+                $('#results-tbody tr').each(function() {
+                    const rowData = {};
+                    rowData.url = $(this).find('a').attr('href') || $(this).text().trim();
+                    rowData.title = $(this).find('.title').text().trim();
+                    rowData.description = $(this).find('.description').text().trim();
+                    rowData.h1 = $(this).find('.h1').text().trim();
+                    rowData.issues = $(this).data('issues') || [];
+                    rowData.status_ok = $(this).data('status') === 'processed';
+                    rows.push(rowData);
+                });
+
+                if (rows.length === 0) {
+                    alert('No analysis data found to export.');
+                    return;
+                }
+
+                const domainName = $('#domain_url').val() || 'site';
+                const loadingHtml = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 5px;"></span> Generating Excel...';
+
+                exportExcelBtn.prop('disabled', true).html(loadingHtml);
+
+                fetch('{{ path("app_export_excel") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: rows, domain: domainName })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || 'Server Error'); });
+                        }
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const cleanDomain = domainName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+                        a.download = cleanDomain + "-seo-report.xlsx";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Export Error:', error);
+                        alert('Failed to download Excel: ' + error.message);
+                    })
+                    .finally(() => {
+                        exportExcelBtn.prop('disabled', false).html(excelSvgIcon + ' Download Report as Excel');
+                    });
+            });
 
             domainForm.on('submit', function(e) {
                 e.preventDefault();
                 const domainUrl = $('#domain_url').val();
-                currentDomain = domainUrl;
 
                 if (!domainUrl) {
                     alert('Please enter a valid domain URL.');
@@ -364,7 +434,7 @@
                         }
                     })
                     .fail(function() {
-                        alert('An error occurred while connecting to the server. Please try again.');
+                        alert('Server connection error. Please try again.');
                         resetUI();
                     })
                     .always(function() {
@@ -372,35 +442,7 @@
                     });
             });
 
-            sitemapLinks.on('click', 'a', function(e) {
-                e.preventDefault();
-
-                resultsTbody.empty();
-                processedUrls = 0;
-                errorCount = 0;
-                totalUrls = 0;
-                $('#progress-title').text('Analysis Progress');
-                updateProgress();
-
-                const sitemapUrl = $(this).data('url');
-                sitemapSelectionContainer.addClass('hidden');
-                resultsContainer.removeClass('hidden');
-                progressContainer.removeClass('hidden');
-
-                $.post('{{ path("api_get_urls_from_sitemap") }}', { sitemap_url: sitemapUrl })
-                    .done(function(response) {
-                        if (response.success) {
-                            populateTable(response.urls);
-                        } else {
-                            alert('Error: ' + response.message);
-                            resetUI();
-                        }
-                    })
-                    .fail(function() {
-                        alert('An error occurred while loading the selected sitemap.');
-                        resetUI();
-                    });
-            });
+            sitemapLinks.on('click', 'a', function(e) { e.preventDefault(); });
 
             analyzeSelectedBtn.on('click', function() {
                 const selectedSitemaps = sitemapLinks.find('input[type="checkbox"]:checked').map(function() {
@@ -414,35 +456,16 @@
 
                 resetForAnalysis();
                 sitemapSelectionContainer.addClass('hidden');
-                progressContainer.removeClass('hidden');
-                resultsContainer.removeClass('hidden');
-
                 fetchAllUrls(selectedSitemaps);
             });
-
-            function resetForAnalysis() {
-                resultsTbody.empty();
-                processedUrls = 0;
-                errorCount = 0;
-                totalUrls = 0;
-                queue = [];
-                activeRequests = 0;
-                $('#progress-title').text('Analysis Progress');
-                updateProgress();
-            }
 
             function fetchAllUrls(sitemapUrls) {
                 const promises = sitemapUrls.map(url => {
                     return $.post('{{ path("api_get_urls_from_sitemap") }}', { sitemap_url: url })
                         .then(function(response) {
-                            if (response.success && response.urls) {
-                                return response.urls;
-                            }
-                            return [];
+                            return (response.success && response.urls) ? response.urls : [];
                         })
-                        .catch(function() {
-                            return [];
-                        });
+                        .catch(() => []);
                 });
 
                 Promise.all(promises).then(urlArrays => {
@@ -452,20 +475,35 @@
                     if (uniqueUrls.length > 0) {
                         populateTable(uniqueUrls);
                     } else {
-                        alert('No URLs found in the selected sitemap categories.');
+                        alert('No URLs found in the selected sitemaps.');
                         resetUI();
                     }
                 });
             }
 
             function resetUI() {
-                submitBtn.removeAttr('aria-busy').prop('disabled', false).text('Get Sitemap Categories');
                 progressContainer.addClass('hidden');
                 resultsContainer.addClass('hidden');
                 sitemapSelectionContainer.addClass('hidden');
+                exportContainer.addClass('hidden');
                 sitemapLinks.empty();
                 resultsTbody.empty();
                 totalUrls = processedUrls = errorCount = 0;
+            }
+
+            function resetForAnalysis() {
+                resultsTbody.empty();
+                processedUrls = 0;
+                errorCount = 0;
+                totalUrls = 0;
+                queue = [];
+                activeRequests = 0;
+                $('#progress-title').text('Analysis Progress');
+                progressBar.val(0);
+                progressText.text('0/0 URLs analyzed.');
+                progressContainer.removeClass('hidden');
+                resultsContainer.removeClass('hidden');
+                exportContainer.addClass('hidden');
             }
 
             function displaySitemapSelection(sitemaps) {
@@ -473,14 +511,9 @@
                 sitemaps.forEach(url => {
                     const fileName = url.split('/').pop();
                     const checkbox = `
-                        <div class="form-check submit-btn mb-24">
-                            <input class="form-check-input ms-3" type="checkbox" value="${url}" id="sitemap-${fileName}">
-                            <label class="form-check-label "
-                                style="
-                                    font-weight: 600;
-                                    transition: background-color 0.3s ease, transform 0.2s ease;
-                                    color: #ffffff;"
-                                for="sitemap-${fileName}">
+                        <div class="form-check submit-btn mb-2 p-2 text-start">
+                            <input class="form-check-input ms-2" type="checkbox" value="${url}" id="sitemap-${fileName}">
+                            <label class="form-check-label ms-2 text-white" style="cursor:pointer;" for="sitemap-${fileName}">
                                 ${fileName}
                             </label>
                         </div>`;
@@ -491,102 +524,102 @@
             }
 
             function populateTable(urls) {
-
-                processedUrls = 0;
-                errorCount = 0;
-                $('#progress-title').text('Analysis Progress');
-
+                resetForAnalysis();
                 totalUrls = urls.length;
-                if (totalUrls === 0) {
-                    alert('No URLs found in the sitemap.');
-                    resetUI();
-                    return;
-                }
-
+                updateProgress();
                 urls.forEach(url => {
                     const row = `
                         <tr data-url="${url}" data-status="pending">
-                        <td class="status" style="background-color: rgba(240, 244, 248, 1);"><div class="status-icon">⚪</div></td>
-                        <td class="url" style="background-color: rgba(240, 244, 248, 1);"><a href="${url}" target="_blank" rel="noopener">${url}</a></td>
-                        <td class="title" style="background-color: rgba(240, 244, 248, 1); color:#000000;"></td>
-                        <td class="description" style="background-color: rgba(240, 244, 248, 1);color:#000000;"></td>
-                        <td class="h1" style="background-color: rgba(240, 244, 248, 1); font-size:20px;color:#000000;"></td>
-                        <td class="issues" style="background-color: rgba(240, 244, 248, 1);"></td>
+                            <td class="status"><div class="status-icon">⚪</div></td>
+                            <td class="url"><a href="${url}" target="_blank" rel="noopener">${url}</a></td>
+                            <td class="title"></td>
+                            <td class="description"></td>
+                            <td class="h1"></td>
+                            <td class="issues"></td>
                         </tr>`;
                     resultsTbody.append(row);
                 });
-
-                progressContainer.removeClass('hidden');
-                resultsContainer.removeClass('hidden');
-                updateProgress();
                 queue = urls.slice();
                 processQueue();
             }
 
             function processQueue() {
-                if (activeRequests >= CONCURRENT_REQUESTS || queue.length === 0) {
-                    return;
-                }
-
+                if (activeRequests >= CONCURRENT_REQUESTS || queue.length === 0) return;
                 const url = queue.shift();
                 const nextRow = resultsTbody.find(`tr[data-url="${url}"]`);
-                if (nextRow.length) {
-                    analyzeUrl(nextRow, url);
-                } else {
-                    processQueue();
-                }
+                if (nextRow.length) analyzeUrl(nextRow, url);
+                else processQueue();
             }
 
             function analyzeUrl(row, url) {
                 activeRequests++;
                 const statusIcon = row.find('.status .status-icon');
-
                 statusIcon.html('<div class="loader"></div>');
 
                 $.post('{{ path("api_analyze_url") }}', { url: url })
                     .done(function(response) {
-                        if (response.success) {
-                            updateRow(row, response.data);
-                        } else {
-                            updateRow(row, { issues: [response.message || 'Unknown error'], status_ok: false });
-                        }
+                        if (response.success) updateRow(row, response.data);
+                        else updateRow(row, { issues: [response.message || 'Unknown error'], status_ok: false });
                     })
                     .fail(function() {
-                        updateRow(row, { issues: ['Server did not respond or an error occurred.'], status_ok: false });
+                        updateRow(row, { issues: ['Connection failed'], status_ok: false });
                     })
                     .always(function() {
                         processedUrls++;
                         activeRequests--;
                         updateProgress();
-
-                        if (queue.length > 0) {
-                            setTimeout(processQueue, DELAY_BETWEEN_REQUESTS);
-                        } else if (activeRequests === 0) {
-                            $('#progress-title').text(`Analysis Completed! (${totalUrls} pages analyzed, ${errorCount} issues found)`);
+                        if (queue.length > 0) setTimeout(processQueue, DELAY_BETWEEN_REQUESTS);
+                        else if (activeRequests === 0) {
+                            $('#progress-title').text(`Analysis Completed! (${totalUrls} analyzed, ${errorCount} issues found)`);
                             submitBtn.removeAttr('aria-busy').prop('disabled', false);
-                            // Export kısmı silindiği için burası artık boş
+                            exportContainer.removeClass('hidden');
                         }
                     });
             }
 
             function updateRow(row, data) {
-                const escapeHtml = text => $('<div>').text(text).html();
-
                 row.find('.title').text(data.title || '');
                 row.find('.description').text(data.description || '');
                 row.find('.h1').text(data.h1 || '');
                 row.data('issues', data.issues || []);
 
                 const statusIcon = row.find('.status .status-icon');
+
+                const issuesList = $('<ul>');
+                let hasCritical = false;
+                let hasWarning = false;
+
+                if (data.issues && data.issues.length > 0) {
+                    data.issues.forEach(issue => {
+                        let liClass = '';
+                        if (issue.includes('Critical')) {
+                            liClass = 'issue-item-critical';
+                            hasCritical = true;
+                        } else if (issue.includes('Warning')) {
+                            liClass = 'issue-item-warning';
+                            hasWarning = true;
+                        }
+
+                        issuesList.append($('<li>').addClass(liClass).text(issue));
+                    });
+                    row.find('.issues').html(issuesList);
+                }
+
                 if (data.status_ok) {
-                    statusIcon.html('✅').addClass('status-ok');
+                    statusIcon.html('✅');
                     row.attr('data-status', 'processed');
                 } else {
                     errorCount++;
-                    statusIcon.html('❌').addClass('status-error');
-                    row.attr('data-status', 'error');
-                    const issuesHtml = '<ul>' + data.issues.map(issue => `<li>${escapeHtml(issue)}</li>`).join('') + '</ul>';
-                    row.find('.issues').html(issuesHtml);
+                    if (hasCritical) {
+                        statusIcon.html('❌');
+                        row.attr('data-status', 'critical');
+                    } else if (hasWarning) {
+                        statusIcon.html('⚠️');
+                        row.attr('data-status', 'warning');
+                    } else {
+                        statusIcon.html('❌');
+                        row.attr('data-status', 'critical');
+                    }
                 }
             }
 
